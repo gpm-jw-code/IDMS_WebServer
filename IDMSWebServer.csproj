@@ -12,11 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\consoleapp_idms_sql_datalog\Class_PostgreSQL_Tool\Class_PostgreSQL_Tool.csproj" />
-    <ProjectReference Include="..\JMAlgorithm\JMAlgorithm.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\Smart IoT Platform\bin\Debug\Newtonsoft.Json.dll</HintPath>
     </Reference>
