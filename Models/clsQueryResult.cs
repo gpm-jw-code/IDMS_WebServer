@@ -99,7 +99,7 @@ namespace IDMSWebServer.Models
 
 
 
-            for (int i = 0; i < source_data.Count; i += 100)
+            for (int i = 0; i < source_data.Count; i += WindowSize)
             {
                 try
                 {
