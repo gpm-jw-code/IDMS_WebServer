@@ -1,4 +1,6 @@
+using IDMSWebServer.Models.DataModels;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,12 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNameCaseInsensitive = false;
     options.SerializerOptions.WriteIndented = true;
 });
+
+
+//builder.Services.AddDbContext<IDMSContext>(
+//     o => o.UseNpgsql(builder.Configuration.GetConnectionString("IDMSDb"))
+//     );
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

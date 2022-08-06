@@ -63,6 +63,12 @@ namespace IDMSWebServer.Models
         public clsQueryResult()
         {
         }
+        public string  AddToCache()
+        {
+           var  QueryID = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-fff");
+            QueryResultManager.AddResult(QueryID, this);
+            return QueryID;
+        }
     }
     public class clsDataValueInfo
     {
