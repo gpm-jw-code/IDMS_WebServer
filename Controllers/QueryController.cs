@@ -39,7 +39,7 @@ namespace IDMSWebServer.Controllers
         [HttpGet("HealthScoreSplice")]
         public async Task<IActionResult> HealthScoreSplice(string queryID, DateTime from, DateTime to)
         {
-            QueryResultManager.TryGetData(queryID, from, to, out clsQueryResult spliceDataRet);
+            QueryResultManager.TryGetData(queryID, from, to, out ViewModels.ChartingViewModel spliceDataRet);
             return Ok(spliceDataRet);
         }
 
