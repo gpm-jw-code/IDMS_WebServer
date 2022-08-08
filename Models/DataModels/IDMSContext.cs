@@ -12,6 +12,9 @@ namespace IDMSWebServer.Models.DataModels
         public DbSet<Health_Score> health_score { get; set; }
         public DbSet<Alert_Index> alert_index { get; set; }
         public DbSet<Vibration_raw_data> vibration_raw_data { get; set; }
+        public DbSet<Physical_quantity> physical_quantity { get; set; }
+        public DbSet<Side_Band> side_band { get; set; }
+        public DbSet<Frequency_doubling> frequency_doubling { get; set; }
 
 
         public IDMSContext(IConfiguration config, string sensorIP)
@@ -36,6 +39,12 @@ namespace IDMSWebServer.Models.DataModels
             modelBuilder.Entity<Health_Score>().Property(i => i.datetime).HasColumnType("timestamp without time zone");
             modelBuilder.Entity<Alert_Index>().Property(i => i.datetime).HasColumnType("timestamp without time zone");
             modelBuilder.Entity<Vibration_raw_data>().Property(i => i.datetime).HasColumnType("timestamp without time zone");
+            modelBuilder.Entity<Physical_quantity>().Property(i => i.datetime).HasColumnType("timestamp without time zone");
+            modelBuilder.Entity<Side_Band>().Property(i => i.datetime).HasColumnType("timestamp without time zone");
+            modelBuilder.Entity<Frequency_doubling>().Property(i => i.datetime).HasColumnType("timestamp without time zone");
+
+            modelBuilder.Entity<Side_Band>().Property(i => i.severity).HasColumnType("json");
+            modelBuilder.Entity<Frequency_doubling>().Property(i => i.severity).HasColumnType("json");
         }
     }
 

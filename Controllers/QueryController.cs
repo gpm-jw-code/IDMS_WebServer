@@ -22,7 +22,6 @@ namespace IDMSWebServer.Controllers
         [HttpGet("HealthScore")]
         public async Task<IActionResult> HealthScore(string ip, DateTime from, DateTime to)
         {
-
             IDMSPostgresHepler IDMSDBHepler = new IDMSPostgresHepler(_config);
             clsQueryResult result = IDMSDBHepler.HealthScoreQuery(ip, from, to);
             return Ok(result);

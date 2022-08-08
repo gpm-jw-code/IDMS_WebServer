@@ -7,5 +7,7 @@
         public double alarm_threshold { get; set; }
         public double warning_threshold { get; set; }
 
+        public string recipe_id { get; set; }
+
     }
 }

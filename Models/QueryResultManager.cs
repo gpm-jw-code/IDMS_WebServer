@@ -41,6 +41,7 @@
                 newValObjls.Add(new ViewModels.DataSet()
                 {
                     borderColor = item.borderColor,
+                    backgroundColor = item.borderColor,
                     label = item.label,
                     data = splicesData.ToList(),
                     fill = "false",
