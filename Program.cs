@@ -28,13 +28,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseResponseCompression();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-var _fileProvider = new PhysicalFileProvider(@"C:\GPM_IDMS\DataExange\Log\IDMS Log\ToUpload");
+
+IConfiguration configuration = app.Configuration;
+var _ic = configuration.GetSection("IDMS");
+var SystemLogDirectory = _ic.GetValue("SystemLogDirectory", "");
+var _fileProvider = new PhysicalFileProvider($@"{SystemLogDirectory}");
 var _requestPath = "/Data";
 
 app.UseFileServer(new FileServerOptions()
