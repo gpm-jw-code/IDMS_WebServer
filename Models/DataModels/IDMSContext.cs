@@ -26,6 +26,7 @@ namespace IDMSWebServer.Models.DataModels
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             var sqlcon = _config.GetConnectionString("IDMSDb");
+
             optionsBuilder.UseNpgsql(sqlcon)
                 .ReplaceService<IModelCacheKeyFactory, MyModelCacheKeyFactory>();
         }

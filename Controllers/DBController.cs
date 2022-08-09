@@ -298,11 +298,85 @@ namespace IDMSWebServer.Controllers
             return Ok(chartData);
         }
 
+        [HttpGet("vibration_raw_data_with_QueryID")]
+        public async Task<IActionResult> GetVibration_raw_data_with_queryID(string ip, DateTime from, DateTime to, string queryID)
+        {
+            ViewModels.ChartingViewModel vibrationChartData = new ViewModels.ChartingViewModel();
+            bool isPreview = queryID == null;
+            vibrationChartData.isPreview = isPreview;
+            vibrationChartData.QueryID = isPreview ? $"Raw-${DateTime.Now}" : null;
+
+            using var context = new IDMSContext(_config, ip);
+            var resultall = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to);
+            int count = resultall.Count();
+            //context.vibration_raw_data.SkipWhile()
+
+            var firstData = resultall.First();
+            if (firstData != null)
+            {
+                var firstTimeStamp = firstData.datetime;
+                List<Vibration_raw_data> datals = new List<Vibration_raw_data>();
+                for (int i = 0; i < count; i += (isPreview ? count / 1000 : 1))
+                {
+                    if (i >= count)
+                        break;
+                    datals.Add(resultall.Skip(i).Take(1).First());
+                }
+
+                if (isPreview)
+                {
+                    vibrationChartData.labels = datals.Select(i => i.datetime).ToList();
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet
+                    {
+                        label = "X",
+                        borderColor = "blue",
+                        data = datals.Select(i => i.x.Average()).ToList()
+                    });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet
+                    {
+                        label = "y",
+                        borderColor = "blue",
+                        data = datals.Select(i => i.y.Average()).ToList()
+                    });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet
+                    {
+                        label = "z",
+                        borderColor = "red",
+                        data = datals.Select(i => i.z.Average()).ToList()
+                    });
+                }
+                else
+                {
+                    vibrationChartData.labels = new List<DateTime>();
+                    vibrationChartData.ymax = 2;
+                    vibrationChartData.ymin = -2;
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "blue" });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "green" });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "red" });
+
+
+                    foreach (var item in datals)
+                    {
+                        var dataBegin = item.datetime;
+                        for (int i = 0; i < 512; i++)
+                        {
+                            vibrationChartData.labels.Add(dataBegin.AddMilliseconds(i* 1.0 / 8000.0 * 1000.0));
+                        }
+
+                        vibrationChartData.datasets[0].data.AddRange(item.x);
+                        vibrationChartData.datasets[1].data.AddRange(item.y);
+                        vibrationChartData.datasets[2].data.AddRange(item.z);
+                    }
+                }
+            }
+            return Ok(vibrationChartData);
+        }
+
         [HttpGet("vibration_raw_data")]
         public async Task<IActionResult> GetVibration_raw_data(string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, ip);
-            var data = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
+            return await GetVibration_raw_data_with_queryID(ip, from, to, null);
+            //var data = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
 
             //TODO設計分業機制
             //clsQueryResult result = new clsQueryResult()
@@ -329,8 +403,6 @@ namespace IDMSWebServer.Controllers
             //        QueryID = queryID,
             //    });
             //}
-
-            return Ok(data.ToList());
         }
 
         /// <summary>

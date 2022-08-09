@@ -1,6 +1,7 @@
 using IDMSWebServer.Models.DataModels;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializ
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDirectoryBrowser();
 builder.Services.AddResponseCompression();
 builder.Services.Configure<JsonOptions>(options =>
 {
@@ -17,11 +19,6 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNameCaseInsensitive = false;
     options.SerializerOptions.WriteIndented = true;
 });
-
-
-//builder.Services.AddDbContext<IDMSContext>(
-//     o => o.UseNpgsql(builder.Configuration.GetConnectionString("IDMSDb"))
-//     );
 
 var app = builder.Build();
 
@@ -34,10 +31,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseResponseCompression();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
-
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+var _fileProvider = new PhysicalFileProvider(@"C:\GPM_IDMS\DataExange\Log\IDMS Log\ToUpload");
+var _requestPath = "/Data";
+
+app.UseFileServer(new FileServerOptions()
+{
+    FileProvider = _fileProvider,
+    RequestPath = _requestPath,
+    EnableDirectoryBrowsing = true,
+});
 
 //app.UseHttpsRedirection();
 
