@@ -28,6 +28,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
+app.UseWebSockets();
 app.UseResponseCompression();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 app.UseDefaultFiles();
@@ -48,7 +51,6 @@ app.UseFileServer(new FileServerOptions()
 });
 
 //app.UseHttpsRedirection();
-
 
 app.UseAuthorization();
 
