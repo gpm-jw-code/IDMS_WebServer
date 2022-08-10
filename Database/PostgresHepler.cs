@@ -53,6 +53,24 @@ namespace IDMSWebServer.Database
 
         }
 
+        internal bool TryGetSchemasFromDB(string DBName, out List<string> schemaList, out string message)
+        {
+            message = "";
+            schemaList = new List<string>();
+            if (TryConnect(Host, Port, UserName, Password, DBName, out NpgsqlConnection conn))
+            {
+                var schemas = conn.GetSchema("Tables");
+                schemaList = schemas.Rows.Cast<DataRow>().Where(row => row["table_schema"].ToString().Contains("sensor")).Select(row => row["table_schema"].ToString()).ToList().Distinct().ToList();
+                conn.Close();
+                return true;
+            }
+            else
+            {
+                message = "DB Connect Fail";
+                return false;
+            }
+        }
+
         #endregion
 
         #region Private Methods

@@ -16,10 +16,39 @@ namespace IDMSWebServer.Controllers
             this._config = config;
         }
 
+        [HttpGet("GetEdgeInformation")]
+        public async Task<IActionResult> GetEdgesInformation()
+        {
+            PostgrelDBController postgrelDBController = new PostgrelDBController(_config);
+            var dbs = await postgrelDBController.GetDatabases();
+            List<ViewModels.EdgeStatus> infos = new List<ViewModels.EdgeStatus>();
+
+            foreach (var db in dbs)
+            {
+                using var context = new IDMSContext(_config, db, "public");
+                try
+                {
+                    var pcinfo = context.pc_information.FirstOrDefault();
+                    if (pcinfo != null)
+                        infos.Add(new ViewModels.EdgeStatus
+                        {
+                            EdgeIP = pcinfo.edge_ip,
+                            Name = db,
+                            SensorNum = pcinfo.online_sensor_cnt,
+                            Status = (DateTime.Now - pcinfo.datetime).TotalSeconds < 30 ? "Online" : "Offline"
+                        });
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            return Ok(infos);
+        }
+
         [HttpGet("VibrationEnergy")]
         public async Task<IActionResult> GetVibrationEnergy(string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, ip);
+            using var context = new IDMSContext(_config, SensorSchema(ip));
             var data = context.vibration_energy.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -66,7 +95,7 @@ namespace IDMSWebServer.Controllers
         {
             try
             {
-                using var context = new IDMSContext(_config, ip);
+                using var context = new IDMSContext(_config, SensorSchema(ip));
                 List<Physical_quantity> data = context.physical_quantity.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
                 List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -152,7 +181,7 @@ namespace IDMSWebServer.Controllers
         [HttpGet("SideBandSeverity")]
         public async Task<IActionResult> GetSideBandSeverity(string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, ip);
+            using var context = new IDMSContext(_config, SensorSchema(ip));
             List<Side_Band> data = context.side_band.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -191,7 +220,7 @@ namespace IDMSWebServer.Controllers
         [HttpGet("Frequency_doublingSeverity")]
         public async Task<IActionResult> GetFrequency_doubling(string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, ip);
+            using var context = new IDMSContext(_config, SensorSchema(ip));
             List<Frequency_doubling> data = context.frequency_doubling.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -229,7 +258,7 @@ namespace IDMSWebServer.Controllers
         [HttpGet("HealthScore")]
         public async Task<IActionResult> GetHealthScore(string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, ip);
+            using var context = new IDMSContext(_config, SensorSchema(ip));
             List<Health_Score> data = context.health_score.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -269,7 +298,7 @@ namespace IDMSWebServer.Controllers
         [HttpGet("AlertIndex")]
         public async Task<IActionResult> GetAlertIndex(string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, ip);
+            using var context = new IDMSContext(_config, SensorSchema(ip));
             List<Alert_Index>? data = context.alert_index.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -306,7 +335,7 @@ namespace IDMSWebServer.Controllers
             vibrationChartData.isPreview = isPreview;
             vibrationChartData.QueryID = isPreview ? $"Raw-${DateTime.Now}" : null;
 
-            using var context = new IDMSContext(_config, ip);
+            using var context = new IDMSContext(_config, SensorSchema(ip));
             var resultall = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to);
             int count = resultall.Count();
             //context.vibration_raw_data.SkipWhile()
@@ -360,7 +389,7 @@ namespace IDMSWebServer.Controllers
                         var dataBegin = item.datetime;
                         for (int i = 0; i < 512; i++)
                         {
-                            vibrationChartData.labels.Add(dataBegin.AddMilliseconds(i* 1.0 / 8000.0 * 1000.0));
+                            vibrationChartData.labels.Add(dataBegin.AddMilliseconds(i * 1.0 / 8000.0 * 1000.0));
                         }
 
                         vibrationChartData.datasets[0].data.AddRange(item.x);
@@ -466,6 +495,10 @@ namespace IDMSWebServer.Controllers
             return previewChartData;
         }
 
+        private string SensorSchema(string ip)
+        {
+            return $"sensor_{ip.Replace(".", "_")}";
+        }
 
         #region 事件
 

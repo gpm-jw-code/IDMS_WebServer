@@ -16,10 +16,26 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("Databases")]
-        public async Task<IActionResult> PostgrelDB()
+        public async Task<List<string>> GetDatabases()
         {
             PostgresHepler postgresHepler = new PostgresHepler(_config);
-            return Ok(postgresHepler.GetDatabases());
+            return postgresHepler.GetDatabases().ToList();
+        }
+
+
+        [HttpGet("GetEdges")]
+        public async Task<IActionResult> GetEdges()
+        {
+            PostgresHepler postgresHepler = new PostgresHepler(_config);
+            var dbs = postgresHepler.GetDatabases();
+
+            //foreach (var db in dbs)
+            //{
+            //    postgresHepler.TryGetSchemasFromDB()
+            //}
+            //postgresHepler.TryGetSchemasFromDB(dbs.ToList()[2]);
+            ////return Ok(await postgresHepler.GetSchemasFromDB(""));
+            return Ok();
         }
     }
 }
