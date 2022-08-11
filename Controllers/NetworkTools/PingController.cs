@@ -38,7 +38,7 @@ namespace IDMSWebServer.Controllers.NetworkTools
                     }
                     catch (Exception ex)
                     {
-                        throw ex;
+                        break;
                     }
                 }
 

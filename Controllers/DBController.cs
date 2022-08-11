@@ -46,9 +46,9 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("VibrationEnergy")]
-        public async Task<IActionResult> GetVibrationEnergy(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetVibrationEnergy(string edgename, string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, SensorSchema(ip));
+            using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             var data = context.vibration_energy.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -91,11 +91,11 @@ namespace IDMSWebServer.Controllers
 
 
         [HttpGet("Physical_quantity")]
-        public async Task<IActionResult> GetPhysicalQuantity(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetPhysicalQuantity(string edgename, string ip, DateTime from, DateTime to)
         {
             try
             {
-                using var context = new IDMSContext(_config, SensorSchema(ip));
+                using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
                 List<Physical_quantity> data = context.physical_quantity.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
                 List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -179,9 +179,9 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("SideBandSeverity")]
-        public async Task<IActionResult> GetSideBandSeverity(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetSideBandSeverity(string edgename, string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, SensorSchema(ip));
+            using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             List<Side_Band> data = context.side_band.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -218,9 +218,9 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("Frequency_doublingSeverity")]
-        public async Task<IActionResult> GetFrequency_doubling(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetFrequency_doubling(string edgename, string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, SensorSchema(ip));
+            using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             List<Frequency_doubling> data = context.frequency_doubling.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -256,9 +256,9 @@ namespace IDMSWebServer.Controllers
             return Ok(chartData);
         }
         [HttpGet("HealthScore")]
-        public async Task<IActionResult> GetHealthScore(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetHealthScore(string edgename, string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, SensorSchema(ip));
+            using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             List<Health_Score> data = context.health_score.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -296,9 +296,9 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("AlertIndex")]
-        public async Task<IActionResult> GetAlertIndex(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetAlertIndex(string edgename, string ip, DateTime from, DateTime to)
         {
-            using var context = new IDMSContext(_config, SensorSchema(ip));
+            using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             List<Alert_Index>? data = context.alert_index.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
@@ -328,60 +328,80 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("vibration_raw_data_with_QueryID")]
-        public async Task<IActionResult> GetVibration_raw_data_with_queryID(string ip, DateTime from, DateTime to, string queryID)
+        public async Task<IActionResult> GetVibration_raw_data_with_queryID(string edgename, string ip, DateTime from, DateTime to, string queryID)
         {
             ViewModels.ChartingViewModel vibrationChartData = new ViewModels.ChartingViewModel();
-            bool isPreview = queryID == null;
+
+            IOrderedQueryable<Vibration_raw_data>? resultall = null;
+            int count=0;
+            try
+            {
+                using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
+                resultall = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).OrderBy(i => i.datetime);
+                count = resultall.Count();
+            }
+            catch (Exception ex)
+            {
+                return Ok(vibrationChartData);
+            }
+            //context.vibration_raw_data.SkipWhile()
+            if (count == 0)
+            {
+                return Ok(vibrationChartData);
+            }
+            bool isSmallAmountData = count < 200;
+            bool isPreview = queryID == null && !isSmallAmountData;
+
+
             vibrationChartData.isPreview = isPreview;
             vibrationChartData.QueryID = isPreview ? $"Raw-${DateTime.Now}" : null;
 
-            using var context = new IDMSContext(_config, SensorSchema(ip));
-            var resultall = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to);
-            int count = resultall.Count();
-            //context.vibration_raw_data.SkipWhile()
-
-            var firstData = resultall.First();
+            var firstData = resultall.FirstOrDefault();
             if (firstData != null)
             {
                 var firstTimeStamp = firstData.datetime;
                 List<Vibration_raw_data> datals = new List<Vibration_raw_data>();
-                for (int i = 0; i < count; i += (isPreview ? count / 1000 : 1))
-                {
-                    if (i >= count)
-                        break;
-                    datals.Add(resultall.Skip(i).Take(1).First());
-                }
 
                 if (isPreview)
                 {
+                    for (int i = 0; i < count; i += count / 100)
+                    {
+                        if (i >= count)
+                            break;
+                        datals.Add(resultall.Skip(i).Take(1).First());
+                    }
                     vibrationChartData.labels = datals.Select(i => i.datetime).ToList();
                     vibrationChartData.datasets.Add(new ViewModels.DataSet
                     {
                         label = "X",
                         borderColor = "blue",
+                        backgroundColor = "blue",
                         data = datals.Select(i => i.x.Average()).ToList()
                     });
                     vibrationChartData.datasets.Add(new ViewModels.DataSet
                     {
                         label = "y",
-                        borderColor = "blue",
+                        borderColor = "green",
+                        backgroundColor = "green",
                         data = datals.Select(i => i.y.Average()).ToList()
                     });
                     vibrationChartData.datasets.Add(new ViewModels.DataSet
                     {
                         label = "z",
                         borderColor = "red",
+                        backgroundColor = "red",
                         data = datals.Select(i => i.z.Average()).ToList()
                     });
                 }
                 else
                 {
+                    datals = resultall.ToList();
                     vibrationChartData.labels = new List<DateTime>();
                     vibrationChartData.ymax = 2;
                     vibrationChartData.ymin = -2;
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "blue" });
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "green" });
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "red" });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "blue", backgroundColor = "blue" });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "green", backgroundColor = "green" });
+                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "red", backgroundColor = "red" });
 
 
                     foreach (var item in datals)
@@ -402,9 +422,9 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("vibration_raw_data")]
-        public async Task<IActionResult> GetVibration_raw_data(string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetVibration_raw_data(string edgename, string ip, DateTime from, DateTime to)
         {
-            return await GetVibration_raw_data_with_queryID(ip, from, to, null);
+            return await GetVibration_raw_data_with_queryID(edgename, ip, from, to, null);
             //var data = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
 
             //TODO設計分業機制
