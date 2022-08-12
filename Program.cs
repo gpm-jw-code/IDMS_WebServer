@@ -38,18 +38,18 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 
-IConfiguration configuration = app.Configuration;
-var _ic = configuration.GetSection("IDMS");
-var SystemLogDirectory = _ic.GetValue("SystemLogDirectory", "");
-var _fileProvider = new PhysicalFileProvider($@"{SystemLogDirectory}");
-var _requestPath = "/Data";
+//IConfiguration configuration = app.Configuration;
+//var _ic = configuration.GetSection("IDMS");
+//var SystemLogDirectory = _ic.GetValue("SystemLogDirectory", "");
+//var _fileProvider = new PhysicalFileProvider($@"{SystemLogDirectory}");
+//var _requestPath = "/Data";
 
-app.UseFileServer(new FileServerOptions()
-{
-    FileProvider = _fileProvider,
-    RequestPath = _requestPath,
-    EnableDirectoryBrowsing = true,
-});
+//app.UseFileServer(new FileServerOptions()
+//{
+//    FileProvider = _fileProvider,
+//    RequestPath = _requestPath,
+//    EnableDirectoryBrowsing = true,
+//});
 
 
 //app.UseHttpsRedirection();
