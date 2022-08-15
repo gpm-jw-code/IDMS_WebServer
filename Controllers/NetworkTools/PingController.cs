@@ -21,8 +21,6 @@ namespace IDMSWebServer.Controllers.NetworkTools
 
                 while (client.State == WebSocketState.Open)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(1));
-
                     Ping ping = new Ping();
                     PingReply? reply = ping.Send(ip);
                     bool success = reply.Status == IPStatus.Success;
@@ -38,8 +36,10 @@ namespace IDMSWebServer.Controllers.NetworkTools
                     }
                     catch (Exception ex)
                     {
+                        Console.WriteLine(ex.StackTrace + "\r\n" + ex.Message);
                         break;
                     }
+                    await Task.Delay(TimeSpan.FromSeconds(3));
                 }
 
 
