@@ -11,6 +11,12 @@ namespace IDMSWebServer.Controllers.NetworkTools
     public class PingController : ControllerBase
     {
 
+        private ILogger _logger;
+        public PingController(ILogger<PingController> logger)
+        {
+            this._logger = logger;
+        }
+
         [HttpGet("/ping-ip")]
         public async Task PingIP(string ip)
         {
@@ -18,9 +24,11 @@ namespace IDMSWebServer.Controllers.NetworkTools
             {
 
                 WebSocket client = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                _logger.LogInformation("{0} Ping Work", ip);
 
                 while (client.State == WebSocketState.Open)
                 {
+
                     Ping ping = new Ping();
                     PingReply? reply = ping.Send(ip);
                     bool success = reply.Status == IPStatus.Success;
@@ -36,12 +44,13 @@ namespace IDMSWebServer.Controllers.NetworkTools
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex.StackTrace + "\r\n" + ex.Message);
+                        _logger.LogWarning(ex.Message);
                         break;
                     }
                     await Task.Delay(TimeSpan.FromSeconds(3));
                 }
 
+                _logger.LogWarning("Ping work finish,Because Websocket client state is {0}",client.State);
 
             }
         }
