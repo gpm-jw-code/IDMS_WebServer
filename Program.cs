@@ -34,7 +34,7 @@ if (app.Environment.IsDevelopment())
 app.UseWebSockets();
 app.UseResponseCompression();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
-app.UseDefaultFiles();
+//app.UseDefaultFiles();
 app.UseStaticFiles();
 
 
