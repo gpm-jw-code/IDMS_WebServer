@@ -22,6 +22,7 @@
     <PackageReference Include="Npgsql" Version="6.0.6" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="VueRouterHistory" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +31,9 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="VueRouterHistory" />
+  </ItemGroup>
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
 
 </Project>

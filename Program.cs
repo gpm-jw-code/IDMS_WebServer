@@ -37,7 +37,8 @@ app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 //app.UseDefaultFiles();
 app.UseStaticFiles();
 
-
+app.UseRouting();
+app.UseVueRouterHistory();
 //IConfiguration configuration = app.Configuration;
 //var _ic = configuration.GetSection("IDMS");
 //var SystemLogDirectory = _ic.GetValue("SystemLogDirectory", "");
