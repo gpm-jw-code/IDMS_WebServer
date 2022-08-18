@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkgpm_admin"]=self["webpackChunkgpm_admin"]||[]).push([[860],{8860:function(n,e,r){r.r(e),r.d(e,{default:function(){return f}});var t=r(3396);const u={style:{padding:"200px"}},a=(0,t._)("h1",null,"???????????",-1),i=[a];function c(n,e,r,a,c,d){return(0,t.wg)(),(0,t.iD)("div",u,i)}var d={},s=r(89);const p=(0,s.Z)(d,[["render",c]]);var f=p}}]);
+//# sourceMappingURL=860.6d372a50.js.map

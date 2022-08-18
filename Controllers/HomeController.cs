@@ -7,16 +7,15 @@ namespace IDMSWebServer.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
+
         [HttpGet]
         public async Task<ContentResult> get()
         {
             return ReturnContent();
         }
-
         [HttpGet("/EdgeMain/{edge_ip}")]
         public async Task<ContentResult> EdgeMain(string edge_ip)
         {
-
             return ReturnContent();
         }
 
