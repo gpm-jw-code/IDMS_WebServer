@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="wwwroot\release note.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.7">
       <PrivateAssets>all</PrivateAssets>
@@ -35,5 +39,12 @@
     <None Remove="VueRouterHistory" />
   </ItemGroup>
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\User\Desktop\IDMS_WebServer\.editorconfig" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\User\Desktop\IDMS_WebServer\.editorconfig" />
+    <None Include="wwwroot\release note.md" />
+  </ItemGroup>
 
 </Project>

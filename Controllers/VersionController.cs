@@ -19,5 +19,14 @@ namespace IDMSWebServer.Controllers
         {
             return Ok(_config.GetSection("Website").GetValue("Version", ""));
         }
+
+        [HttpGet("ReleaseNote")]
+        public async Task<ContentResult> ReleaseNote()
+        {
+            var md = System.IO.File.ReadAllText("wwwroot/release note.md");
+            //var html = System.IO.File.ReadAllText("htmlpage.html");
+            return base.Content(md, "text/markdown");
+        }
+        
     }
 }
