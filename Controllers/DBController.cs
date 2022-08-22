@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using IDMSWebServer.Models.DataModels;
 using IDMSWebServer.Models;
+using System.Diagnostics;
 
 namespace IDMSWebServer.Controllers
 {
@@ -10,10 +11,11 @@ namespace IDMSWebServer.Controllers
     public class DBController : ControllerBase
     {
         private readonly IConfiguration _config;
-
-        public DBController(IConfiguration config)
+        private ILogger _logger;
+        public DBController(IConfiguration config, ILogger<DBController> loger)
         {
             this._config = config;
+            _logger = loger;
         }
 
         [HttpGet("GetEdgeInformation")]
@@ -330,13 +332,16 @@ namespace IDMSWebServer.Controllers
         [HttpGet("vibration_raw_data_with_QueryID")]
         public async Task<IActionResult> GetVibration_raw_data_with_queryID(string edgename, string ip, DateTime from, DateTime to, string queryID)
         {
+            Stopwatch watch = Stopwatch.StartNew();
+
+            _logger.LogInformation("User query Edge:{0} Module:{1} From:{2} To:{3} - QueryID:{4} ", edgename, ip, from, to, queryID);
             ViewModels.ChartingViewModel vibrationChartData = new ViewModels.ChartingViewModel();
 
             IOrderedQueryable<Vibration_raw_data>? resultall = null;
-            int count=0;
+            int count = 0;
+            var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             try
             {
-                using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
                 resultall = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).OrderBy(i => i.datetime);
                 count = resultall.Count();
             }
@@ -356,74 +361,83 @@ namespace IDMSWebServer.Controllers
             vibrationChartData.isPreview = isPreview;
             vibrationChartData.QueryID = isPreview ? $"Raw-${DateTime.Now}" : null;
 
-            var firstData = resultall.FirstOrDefault();
-            if (firstData != null)
-            {
-                var firstTimeStamp = firstData.datetime;
-                List<Vibration_raw_data> datals = new List<Vibration_raw_data>();
 
-                if (isPreview)
+            List<Vibration_raw_data> datals = new List<Vibration_raw_data>();
+
+            if (isPreview)
+            {
+                try
                 {
                     for (int i = 0; i < count; i += count / 100)
                     {
                         if (i >= count)
                             break;
-                        datals.Add(resultall.Skip(i).Take(1).First());
+                        var data = resultall.Skip(i).Take(1).First();
+                        datals.Add(data);
                     }
-                    vibrationChartData.labels = datals.Select(i => i.datetime).ToList();
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet
-                    {
-                        label = "X",
-                        borderColor = "blue",
-                        backgroundColor = "blue",
-                        data = datals.Select(i => i.x.Average()).ToList()
-                    });
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet
-                    {
-                        label = "y",
-                        borderColor = "green",
-                        backgroundColor = "green",
-                        data = datals.Select(i => i.y.Average()).ToList()
-                    });
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet
-                    {
-                        label = "z",
-                        borderColor = "red",
-                        backgroundColor = "red",
-                        data = datals.Select(i => i.z.Average()).ToList()
-                    });
+
                 }
-                else
+                catch (Exception ex)
                 {
-                    datals = resultall.ToList();
-                    vibrationChartData.labels = new List<DateTime>();
-                    vibrationChartData.ymax = 2;
-                    vibrationChartData.ymin = -2;
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "blue", backgroundColor = "blue" });
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "green", backgroundColor = "green" });
-                    vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "red", backgroundColor = "red" });
+                    _logger.LogError(ex, "GetVibration_raw_data_with_queryID");
+                }
+
+                vibrationChartData.labels = datals.Select(i => i.datetime).ToList();
+                vibrationChartData.datasets.Add(new ViewModels.DataSet
+                {
+                    label = "X",
+                    borderColor = "blue",
+                    backgroundColor = "blue",
+                    data = datals.Select(i => i.x.Average()).ToList()
+                });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet
+                {
+                    label = "y",
+                    borderColor = "green",
+                    backgroundColor = "green",
+                    data = datals.Select(i => i.y.Average()).ToList()
+                });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet
+                {
+                    label = "z",
+                    borderColor = "red",
+                    backgroundColor = "red",
+                    data = datals.Select(i => i.z.Average()).ToList()
+                });
+            }
+            else
+            {
+                datals = resultall.ToList();
+                vibrationChartData.labels = new List<DateTime>();
+                vibrationChartData.ymax = 2;
+                vibrationChartData.ymin = -2;
+                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "blue", backgroundColor = "blue" });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "green", backgroundColor = "green" });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "red", backgroundColor = "red" });
 
 
-                    foreach (var item in datals)
+                foreach (var item in datals)
+                {
+                    var dataBegin = item.datetime;
+                    for (int i = 0; i < 512; i++)
                     {
-                        var dataBegin = item.datetime;
-                        for (int i = 0; i < 512; i++)
-                        {
-                            vibrationChartData.labels.Add(dataBegin.AddMilliseconds(i * 1.0 / 8000.0 * 1000.0));
-                        }
-
-                        vibrationChartData.datasets[0].data.AddRange(item.x);
-                        vibrationChartData.datasets[1].data.AddRange(item.y);
-                        vibrationChartData.datasets[2].data.AddRange(item.z);
+                        vibrationChartData.labels.Add(dataBegin.AddMilliseconds(i * 1.0 / 8000.0 * 1000.0));
                     }
+
+                    vibrationChartData.datasets[0].data.AddRange(item.x);
+                    vibrationChartData.datasets[1].data.AddRange(item.y);
+                    vibrationChartData.datasets[2].data.AddRange(item.z);
                 }
             }
+            watch.Stop();
+            _logger.LogWarning("Raw Data Query OUt Time Spend:{0}",watch.Elapsed);
             return Ok(vibrationChartData);
         }
 
         [HttpGet("vibration_raw_data")]
         public async Task<IActionResult> GetVibration_raw_data(string edgename, string ip, DateTime from, DateTime to)
         {
+            _logger.LogInformation("User query Edge:{0} Module:{1} From:{2} To:{3} ", edgename, ip, from, to);
             return await GetVibration_raw_data_with_queryID(edgename, ip, from, to, null);
             //var data = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
 

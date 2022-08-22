@@ -30,12 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\Smart IoT Platform\bin\Debug\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="VueRouterHistory" />
   </ItemGroup>
   <ProjectExtensions>
