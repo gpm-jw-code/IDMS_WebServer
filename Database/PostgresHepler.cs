@@ -89,6 +89,7 @@ namespace IDMSWebServer.Database
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return null;
             }
         }
@@ -96,8 +97,8 @@ namespace IDMSWebServer.Database
         protected bool TryConnect(string host, string port, string userName, string password, string tableName, out NpgsqlConnection conn)
         {
             conn = Connect(host, port, userName, password, tableName);
-            if(conn == null)
-                 return false;     
+            if (conn == null)
+                return false;
             return conn.State == ConnectionState.Open;
         }
 

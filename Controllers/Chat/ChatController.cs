@@ -30,7 +30,7 @@ namespace IDMSWebServer.Controllers
                     name = name
                 };
                 onlineClients.Add(user);
-
+                BrocastMessageOutAsync($"{user.name} Join.", true);
                 while (ws.State == System.Net.WebSockets.WebSocketState.Open)
                 {
                     byte[] buf = new byte[8192];
@@ -41,11 +41,18 @@ namespace IDMSWebServer.Controllers
                     BrocastMessageOutAsync(userInput);
                     logger.LogInformation("{0} Say:{1}", userName, userInput);
                 }
+                BrocastMessageOutAsync($"{user.name} Leave.", true);
+                onlineClients.Remove(user);
             }
         }
 
+        [HttpGet("OnlinePeople")]
+        public async Task<IActionResult> GetOnlinePeople()
+        {
+            return Ok(onlineClients);
+        }
 
-        private async Task BrocastMessageOutAsync(string msg)
+        private async Task BrocastMessageOutAsync(string msg, bool isSysInfo = false)
         {
             await Task.Delay(1);
             Message msgObj = new Message()
@@ -53,10 +60,11 @@ namespace IDMSWebServer.Controllers
                 from = user.name,
                 id = user.id,
                 message = msg,
-                time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss")
+                time = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"),
+                isInfoMessage = isSysInfo
 
             };
-            foreach (var client in onlineClients.FindAll(cl => cl.id != user.id).ToList())
+            foreach (var client in onlineClients.FindAll(ci => ci != null).FindAll(cl => cl.id != user.id).ToList())
             {
                 client.SendMsgAsync(msgObj);
             }
@@ -70,6 +78,7 @@ namespace IDMSWebServer.Controllers
         public string id { get; set; }
         public string from { get; set; }
         public string message { get; set; }
+        public bool isInfoMessage { get; set; } = false;
     }
 
     public class WebsocketClient

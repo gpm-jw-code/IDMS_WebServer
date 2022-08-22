@@ -20,6 +20,7 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNameCaseInsensitive = false;
     options.SerializerOptions.WriteIndented = true;
 });
+builder.Services.AddApplicationInsightsTelemetry();
 
 var app = builder.Build();
 
