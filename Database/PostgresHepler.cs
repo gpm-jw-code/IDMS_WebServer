@@ -96,9 +96,9 @@ namespace IDMSWebServer.Database
         protected bool TryConnect(string host, string port, string userName, string password, string tableName, out NpgsqlConnection conn)
         {
             conn = Connect(host, port, userName, password, tableName);
-            bool connected = conn.State == ConnectionState.Open;
-            conn = connected ? conn : null;
-            return connected;
+            if(conn == null)
+                 return false;     
+            return conn.State == ConnectionState.Open;
         }
 
 
