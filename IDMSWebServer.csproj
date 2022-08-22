@@ -32,7 +32,11 @@
   <ItemGroup>
     <None Remove="VueRouterHistory" />
   </ItemGroup>
-  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties appsettings_1json__JsonSchema="" />
+    </VisualStudio>
+  </ProjectExtensions>
   <ItemGroup>
     <EditorConfigFiles Remove="C:\Users\User\Desktop\IDMS_WebServer\.editorconfig" />
   </ItemGroup>
