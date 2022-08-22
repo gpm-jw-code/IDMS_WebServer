@@ -1,4 +1,4 @@
-using IDMSWebServer.Models.DataModels;
+﻿using IDMSWebServer.Models.DataModels;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;

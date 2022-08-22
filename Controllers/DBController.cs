@@ -339,7 +339,7 @@ namespace IDMSWebServer.Controllers
 
             IOrderedQueryable<Vibration_raw_data>? resultall = null;
             int count = 0;
-            var context = new IDMSContext(_config, edgename, SensorSchema(ip));
+            using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             try
             {
                 resultall = context.vibration_raw_data.Where(i => i.datetime >= from && i.datetime <= to).OrderBy(i => i.datetime);
@@ -431,6 +431,7 @@ namespace IDMSWebServer.Controllers
             }
             watch.Stop();
             _logger.LogWarning("Raw Data Query OUt Time Spend:{0}",watch.Elapsed);
+
             return Ok(vibrationChartData);
         }
 

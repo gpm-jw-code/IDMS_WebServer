@@ -8,6 +8,7 @@
         public string AIDCharingData { get; internal set; }
         public string ModuleStatesData { get; internal set; }
         public clsVE VE { get; set; } = new clsVE();
+        public string EdgeStates { get; internal set; }
     }
     public class clsVE
     {

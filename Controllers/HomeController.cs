@@ -7,7 +7,6 @@ namespace IDMSWebServer.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
-
         [HttpGet]
         public async Task<ContentResult> get()
         {
@@ -41,6 +40,11 @@ namespace IDMSWebServer.Controllers
             return ReturnContent();
         }
 
+        [HttpGet("/chating")]
+        public async Task<ContentResult> chating()
+        {
+            return ReturnContent();
+        }
 
         private ContentResult ReturnContent()
         {

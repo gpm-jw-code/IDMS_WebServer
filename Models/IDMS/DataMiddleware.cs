@@ -36,6 +36,16 @@ namespace IDMSWebServer.Models.IDMS
                     return null;
             }
 
+            internal static string GetEdgeStatus(string edgeIP)
+            {
+                if (EdgeDatas.TryGetValue(edgeIP, out IDMSEdgeData edge))
+                {
+                    return edge.EdgeStates;
+                }
+                else
+                    return null;
+            }
+
             internal static string GetVEData(string edgeIP, string sensorIP)
             {
                 if (EdgeDatas.TryGetValue(edgeIP, out IDMSEdgeData edge))
@@ -87,8 +97,10 @@ namespace IDMSWebServer.Models.IDMS
                         return null;
                     if (sensorIP.ToUpper() == "ALL")
                         return edge.AIHCharingData;
+
                     var obj = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(edge.AIHCharingData);
-                    return "";
+                    var vm  = obj.FirstOrDefault(o=>o["IP"].ToString()==sensorIP);
+                    return vm==null? null : JsonSerializer.Serialize(vm);
                 }
                 else
                 {
@@ -105,7 +117,8 @@ namespace IDMSWebServer.Models.IDMS
                     if (sensorIP.ToUpper() == "ALL")
                         return edge.AIDCharingData;
                     var obj = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(edge.AIDCharingData);
-                    return "";
+                    var vm = obj.FirstOrDefault(o => o["IP"].ToString() == sensorIP);
+                    return vm == null ? null : JsonSerializer.Serialize(vm);
                 }
                 else
                 {
@@ -154,6 +167,12 @@ namespace IDMSWebServer.Models.IDMS
             {
                 InitializeEdge(edgeIP);
                 EdgeDatas[edgeIP].VE.WithoutCharting = jsonstr;
+            }
+
+            internal static void UpdateEdgeStates(string edgeIP, string jsonStr)
+            {
+                InitializeEdge(edgeIP);
+                EdgeDatas[edgeIP].EdgeStates = jsonStr;
             }
         }
 

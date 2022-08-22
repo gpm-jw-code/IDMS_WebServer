@@ -14,30 +14,32 @@ namespace IDMSWebServer.Controllers
         }
 
 
+        [HttpPost("EdgeStates/{edgeIP}")]
+        public async Task EdgeStates(string edgeIP, [FromBody] string jsonStr)
+        {
+            Models.IDMS.DataMiddleware.Update.UpdateEdgeStates(edgeIP, jsonStr);
+        }
+
 
         [HttpPost("DignoseWsData/{edgeIP}")]
         public async Task DignoseWSdata(string edgeIP, [FromBody] string jsonStr)
         {
-            logger.LogInformation("Edge:{0},Dignose Data Recieved", edgeIP);
             Models.IDMS.DataMiddleware.Update.UpdateDignoseData(edgeIP, jsonStr);
         }
 
         [HttpPost("DignoseWs_HS_ChartingData/{edgeIP}")]
         public async Task DignoseWs_HS_ChartingData(string edgeIP, [FromBody] string jsonStr)
         {
-            logger.LogInformation("Edge:{0},Dignose Data Recieved", edgeIP);
             Models.IDMS.DataMiddleware.Update.UpdateDignoseHSCharingData(edgeIP, jsonStr);
         }
         [HttpPost("DignoseWs_AID_ChartingData/{edgeIP}")]
         public async Task DignoseWs_AID_ChartingData(string edgeIP, [FromBody] string jsonStr)
         {
-            logger.LogInformation("Edge:{0},Dignose Data Recieved", edgeIP);
             Models.IDMS.DataMiddleware.Update.UpdateDignoseAIDCharingData(edgeIP, jsonStr);
         }
         [HttpPost("DignoseWs_AIH_ChartingData/{edgeIP}")]
         public async Task DignoseWs_AIH_ChartingData(string edgeIP, [FromBody] string jsonStr)
         {
-            logger.LogInformation("Edge:{0},Dignose Data Recieved", edgeIP);
             Models.IDMS.DataMiddleware.Update.UpdateDignoseAIHSCharingData(edgeIP, jsonStr);
         }
 

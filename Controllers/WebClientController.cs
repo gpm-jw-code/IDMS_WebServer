@@ -15,6 +15,26 @@ namespace IDMSWebServer.Controllers
             this.logger = logger;
         }
 
+        [HttpGet("/EdgeStatus")]
+        public async Task GetEdgeStatus(string edgeIP)
+        {
+            IsWebsocketRequest(out bool iswebsocket, out System.Net.WebSockets.WebSocket client);
+            if (iswebsocket && client.State == System.Net.WebSockets.WebSocketState.Open)
+            {
+                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(new byte[3]), CancellationToken.None));
+                while (client.State == System.Net.WebSockets.WebSocketState.Open)
+                {
+                    await Task.Delay(1000);
+                    string stateJson = Models.IDMS.DataMiddleware.Fetch.GetEdgeStatus(edgeIP);
+                    if (stateJson == null)
+                        continue;
+                    client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(stateJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+
+                }
+                logger.LogInformation("websocket client close [EdgeStatus]");
+            }
+        }
+
 
         [HttpGet("/VibrationEnergy")]
         public async Task GetVibrationEnergy(string edgeIP, string? sensorIP)
@@ -22,7 +42,7 @@ namespace IDMSWebServer.Controllers
             IsWebsocketRequest(out bool iswebsocket, out System.Net.WebSockets.WebSocket client);
             if (iswebsocket && client.State == System.Net.WebSockets.WebSocketState.Open)
             {
-                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(), CancellationToken.None));
+                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(new byte[3]), CancellationToken.None));
                 while (client.State == System.Net.WebSockets.WebSocketState.Open)
                 {
                     await Task.Delay(1000);
@@ -32,6 +52,7 @@ namespace IDMSWebServer.Controllers
                     client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(stateJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
 
                 }
+                logger.LogInformation("websocket client close [VibrationEnergy]");
             }
         }
 
@@ -41,7 +62,7 @@ namespace IDMSWebServer.Controllers
             IsWebsocketRequest(out bool iswebsocket, out System.Net.WebSockets.WebSocket client);
             if (iswebsocket && client.State == System.Net.WebSockets.WebSocketState.Open)
             {
-                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(), CancellationToken.None));
+                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(new byte[3]), CancellationToken.None));
                 while (client.State == System.Net.WebSockets.WebSocketState.Open)
                 {
                     await Task.Delay(1000);
@@ -51,6 +72,8 @@ namespace IDMSWebServer.Controllers
                     client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(stateJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
 
                 }
+                logger.LogInformation("websocket client close [ModuleInfoGet]");
+
             }
         }
 
@@ -64,7 +87,18 @@ namespace IDMSWebServer.Controllers
 
                 byte[] dataBuf = null;
 
-                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(), CancellationToken.None));
+                _ = Task.Factory.StartNew(async () =>
+                {
+                    try
+                    {
+                        await client.ReceiveAsync(new ArraySegment<byte>(new byte[3]), CancellationToken.None);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                }
+                );
 
                 while (client.State == System.Net.WebSockets.WebSocketState.Open)
                 {
@@ -97,7 +131,6 @@ namespace IDMSWebServer.Controllers
                     try
                     {
                         await client.SendAsync(new ArraySegment<byte>(dataBuf), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
-                        logger.LogInformation("Send Dignose Data to Websocket Client");
                     }
                     catch (Exception ex)
                     {
@@ -106,6 +139,8 @@ namespace IDMSWebServer.Controllers
                     }
 
                 }
+
+                logger.LogInformation("websocket client close [Dignose]");
             }
         }
 
