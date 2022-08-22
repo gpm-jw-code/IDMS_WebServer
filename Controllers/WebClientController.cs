@@ -15,6 +15,26 @@ namespace IDMSWebServer.Controllers
             this.logger = logger;
         }
 
+
+        [HttpGet("/VibrationEnergy")]
+        public async Task GetVibrationEnergy(string edgeIP, string? sensorIP)
+        {
+            IsWebsocketRequest(out bool iswebsocket, out System.Net.WebSockets.WebSocket client);
+            if (iswebsocket && client.State == System.Net.WebSockets.WebSocketState.Open)
+            {
+                Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(), CancellationToken.None));
+                while (client.State == System.Net.WebSockets.WebSocketState.Open)
+                {
+                    await Task.Delay(1000);
+                    string stateJson = Models.IDMS.DataMiddleware.Fetch.GetVEData(edgeIP, sensorIP);
+                    if (stateJson == null)
+                        continue;
+                    client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(stateJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
+
+                }
+            }
+        }
+
         [HttpGet("/ModuleInfoGet")]
         public async Task GetModuleInfo(string edgeIP)
         {
@@ -24,11 +44,11 @@ namespace IDMSWebServer.Controllers
                 Task.Factory.StartNew(async () => await client.ReceiveAsync(new ArraySegment<byte>(), CancellationToken.None));
                 while (client.State == System.Net.WebSockets.WebSocketState.Open)
                 {
-                    await Task.Delay(100);
+                    await Task.Delay(1000);
                     string stateJson = Models.IDMS.DataMiddleware.Fetch.GetModuleStateData(edgeIP);
                     if (stateJson == null)
                         continue;
-                    client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(stateJson)),System.Net.WebSockets.WebSocketMessageType.Text,true,CancellationToken.None);
+                    client.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(stateJson)), System.Net.WebSockets.WebSocketMessageType.Text, true, CancellationToken.None);
 
                 }
             }

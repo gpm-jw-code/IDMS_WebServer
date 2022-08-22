@@ -7,5 +7,11 @@
         public string AIHCharingData { get; internal set; }
         public string AIDCharingData { get; internal set; }
         public string ModuleStatesData { get; internal set; }
+        public clsVE VE { get; set; } = new clsVE();
+    }
+    public class clsVE
+    {
+        public string WithoutCharting { get; set; }
+        public string WithCharting { get; set; }
     }
 }

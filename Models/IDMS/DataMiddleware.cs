@@ -36,6 +36,31 @@ namespace IDMSWebServer.Models.IDMS
                     return null;
             }
 
+            internal static string GetVEData(string edgeIP, string sensorIP)
+            {
+                if (EdgeDatas.TryGetValue(edgeIP, out IDMSEdgeData edge))
+                {
+
+                    if (sensorIP == null)
+                    {
+                        return edge.VE.WithoutCharting;
+                    }
+                    else
+                    {
+                        var objs = JsonSerializer.Deserialize<Dictionary<string, Object>>(edge.VE.WithCharting);
+                        if (objs.TryGetValue(sensorIP, out object json))
+                        {
+                            return JsonSerializer.Serialize(json);
+                        }
+                        else
+                            return null;
+
+                    }
+                }
+                else
+                    return null;
+            }
+
             internal static string? GetHSChartingDataJsonBySensorIP(string edgeIP, string sensorIP)
             {
                 if (EdgeDatas.TryGetValue(edgeIP, out IDMSEdgeData edge))
@@ -118,6 +143,17 @@ namespace IDMSWebServer.Models.IDMS
             {
                 InitializeEdge(edgeIP);
                 EdgeDatas[edgeIP].ModuleStatesData = jsonstr;
+            }
+
+            internal static void UpdateVEDataWithCharting(string edgeIP, string jsonstr)
+            {
+                InitializeEdge(edgeIP);
+                EdgeDatas[edgeIP].VE.WithCharting = jsonstr;
+            }
+            internal static void UpdateVEDataWithoutCharting(string edgeIP, string jsonstr)
+            {
+                InitializeEdge(edgeIP);
+                EdgeDatas[edgeIP].VE.WithoutCharting = jsonstr;
             }
         }
 

@@ -46,5 +46,17 @@ namespace IDMSWebServer.Controllers
         {
             Models.IDMS.DataMiddleware.Update.UpdateModuleStatesData(edgeIP, jsonstr);
         }
+
+
+        [HttpPost("VEData/{edgeIP}")]
+        public async Task VEData(string edgeIP, [FromBody] string jsonstr)
+        {
+            Models.IDMS.DataMiddleware.Update.UpdateVEDataWithCharting(edgeIP, jsonstr);
+        }
+        [HttpPost("VEDataWithoutCharting/{edgeIP}")]
+        public async Task VEDataWithoutCharting(string edgeIP, [FromBody] string jsonstr)
+        {
+            Models.IDMS.DataMiddleware.Update.UpdateVEDataWithoutCharting(edgeIP, jsonstr);
+        }
     }
 }
