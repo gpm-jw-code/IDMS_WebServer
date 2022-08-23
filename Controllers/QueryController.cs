@@ -58,10 +58,14 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("ModuleInfos")]
-        public async Task<IActionResult> ModuleInfos()
+        public async Task<IActionResult> ModuleInfos(string? dbName)
         {
+            if(dbName== "undefined" | dbName == null)
+            {
+                return BadRequest();
+            }
             var helper = new IDMSPostgresHepler(_config);
-            return Ok(helper.ModuleInfosQuery());
+            return Ok(helper.ModuleInfosQuery(dbName));
         }
 
     }

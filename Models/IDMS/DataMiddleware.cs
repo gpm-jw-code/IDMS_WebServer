@@ -9,8 +9,11 @@ namespace IDMSWebServer.Models.IDMS
 
         private static void InitializeEdge(string edgeIP)
         {
-            if (!EdgeDatas.ContainsKey(edgeIP))
-                EdgeDatas.Add(edgeIP, new IDMSEdgeData());
+            lock (EdgeDatas)
+            {
+                if (!EdgeDatas.ContainsKey(edgeIP))
+                    EdgeDatas.Add(edgeIP, new IDMSEdgeData());
+            }
         }
         public struct Fetch
         {
@@ -99,8 +102,8 @@ namespace IDMSWebServer.Models.IDMS
                         return edge.AIHCharingData;
 
                     var obj = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(edge.AIHCharingData);
-                    var vm  = obj.FirstOrDefault(o=>o["IP"].ToString()==sensorIP);
-                    return vm==null? null : JsonSerializer.Serialize(vm);
+                    var vm = obj.FirstOrDefault(o => o["IP"].ToString() == sensorIP);
+                    return vm == null ? null : JsonSerializer.Serialize(vm);
                 }
                 else
                 {

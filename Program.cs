@@ -1,5 +1,6 @@
 ﻿using IDMSWebServer.Models.DataModels;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -13,7 +14,6 @@ builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializ
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDirectoryBrowser();
-builder.Services.AddResponseCompression();
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = null;
@@ -21,6 +21,18 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.WriteIndented = true;
 });
 builder.Services.AddApplicationInsightsTelemetry();
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(option => option.Level = System.IO.Compression.CompressionLevel.Optimal);
+builder.Services.AddResponseCompression(options => {
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "text/html;charset=uft-8",
+        "application/json;charset=utf-8"
+    });
+}) ;
 
 var app = builder.Build();
 
@@ -31,9 +43,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseMiddleware<PathRewritingMiddleware>("test.com", "/");
 app.UseWebSockets();
-app.UseResponseCompression();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 //app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -58,5 +69,33 @@ app.UseVueRouterHistory();
 
 app.UseAuthorization();
 app.MapControllers();
-
+app.UseResponseCompression();
 app.Run();
+
+
+public class PathRewritingMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly string _domain;
+    private readonly string _path;
+
+    public PathRewritingMiddleware(RequestDelegate next, string domain, string path)
+    {
+        _next = next;
+        _domain = domain;
+        _path = path;
+    }
+
+    public Task Invoke(HttpContext context)
+    {
+        if (context.Request.Path.Equals("/") || context.Request.Path.Equals(""))
+        {
+            string host = context.Request.Host.Value;
+            if (host.Equals(_domain, StringComparison.InvariantCultureIgnoreCase))
+            {
+                context.Request.Path = _path;
+            }
+        }
+        return _next(context);
+    }
+}

@@ -60,10 +60,10 @@ namespace IDMSWebServer.Database
             return result;
         }
 
-        internal List<clsModuleInfo> ModuleInfosQuery()
+        internal List<clsModuleInfo> ModuleInfosQuery(string? dbName)
         {
             string sqlCommand = $"SELECT sensor_ip,eq_name,unit_name,type FROM public.all_sensor_information";
-            TryGetTableFromDB(sqlCommand,out int dataNum, out DataTable table,out string message);
+            TryGetTableFromDB(sqlCommand, dbName, out int dataNum, out DataTable table,out string message);
             List<clsModuleInfo> result = new List<clsModuleInfo>();
 
             result = table.Rows.Cast<DataRow>().Select(row => new clsModuleInfo( (string) row["sensor_ip"], (string)row["eq_name"], (string)row["unit_name"])).ToList();

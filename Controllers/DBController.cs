@@ -24,7 +24,8 @@ namespace IDMSWebServer.Controllers
             PostgrelDBController postgrelDBController = new PostgrelDBController(_config);
             var dbs = await postgrelDBController.GetDatabases();
             List<ViewModels.EdgeStatus> infos = new List<ViewModels.EdgeStatus>();
-
+            Database.PostgresHepler helper = new Database.PostgresHepler(_config);
+            var useageDict = await helper.GetDatabaseUsageState();
             foreach (var db in dbs)
             {
                 using var context = new IDMSContext(_config, db, "public");
@@ -32,13 +33,19 @@ namespace IDMSWebServer.Controllers
                 {
                     var pcinfo = context.pc_information.FirstOrDefault();
                     if (pcinfo != null)
-                        infos.Add(new ViewModels.EdgeStatus
+                    {
+                        var status = new ViewModels.EdgeStatus
                         {
                             EdgeIP = pcinfo.edge_ip,
                             Name = db,
                             SensorNum = pcinfo.online_sensor_cnt,
-                            Status = (DateTime.Now - pcinfo.datetime).TotalSeconds < 30 ? "Online" : "Offline"
-                        });
+                            Status = (DateTime.Now - pcinfo.datetime).TotalSeconds < 30 ? "Online" : "Offline",
+
+                        };
+                        useageDict.TryGetValue(db, out var _value);
+                        status.DbDickUsage = _value == null ? "?" : _value;
+                        infos.Add(status);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -47,12 +54,40 @@ namespace IDMSWebServer.Controllers
             return Ok(infos);
         }
 
-        [HttpGet("VibrationEnergy")]
-        public async Task<IActionResult> GetVibrationEnergy(string edgename, string ip, DateTime from, DateTime to)
+        [HttpGet("DBDiskUsage")]
+        public async Task<IActionResult> GetDBDiskUsage()
         {
+            Database.PostgresHepler helper = new Database.PostgresHepler(_config);
+            var useageDict = await helper.GetDatabaseUsageState();
+            return Ok(useageDict);
+        }
+
+        [HttpGet("VibrationEnergy")]
+        public async Task<IActionResult> GetVibrationEnergy(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
+        {
+            int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-            var data = context.vibration_energy.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
-            List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
+            List<Vibration_Energy>? _data = context.vibration_energy.OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
+            List<Vibration_Energy> data = new List<Vibration_Energy>();
+            if (_data.Count < downSampleCnt)
+            {
+                data = _data;
+            }
+            else
+                for (int i = 0; i < _data.Count; i += downSampleCnt)
+                {
+                    var ls = _data.Skip(i).Take(downSampleCnt);
+                    double minVal = ls.Min(h => h.x);
+                    var min = ls.FirstOrDefault(h => h.x == minVal);
+                    if (min != null)
+                        data.Add(min);
+                    double maxVal = ls.Max(h => h.x);
+                    var max = ls.FirstOrDefault(h => h.x == maxVal);
+                    if (max != null)
+                        data.Add(max);
+                }
+
+            List<DateTime>? timeList = data.OrderBy(i => i.datetime).Select(i => i.datetime).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel();
             chartData.labels = timeList;
@@ -78,14 +113,12 @@ namespace IDMSWebServer.Controllers
                 borderColor = "red",
                 backgroundColor = "red",
             });
-            if (data.Count() > 1500)
-            {
-                string queryID = chartData.AddToCache();
-                clsPreviewData preview = new clsPreviewData(timeList, chartData.datasets[0].data);
-                ViewModels.ChartingViewModel previewChartData = PreviewVMBuilder(queryID, "振動能量", chartData.labels, data.Select(d => (object)d).ToList(), "x", ymax: chartData.ymax, ymin: chartData.ymin);
-
-                return Ok(previewChartData);
-            }
+            //if (data.Count() > 1500)
+            //{
+            //    string queryID = chartData.AddToCache();
+            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "振動能量", chartData.labels, data.Select(d => (object)d).ToList(), "x", ymax: chartData.ymax, ymin: chartData.ymin);
+            //    return Ok(previewChartData);
+            //}
 
 
             return Ok(chartData);
@@ -93,13 +126,34 @@ namespace IDMSWebServer.Controllers
 
 
         [HttpGet("Physical_quantity")]
-        public async Task<IActionResult> GetPhysicalQuantity(string edgename, string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetPhysicalQuantity(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
         {
             try
             {
+                int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel );
                 using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-                List<Physical_quantity> data = context.physical_quantity.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
-                List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
+                List<Physical_quantity> _data = context.physical_quantity.OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
+                List<Physical_quantity> data = new List<Physical_quantity>();
+                if (_data.Count < downSampleCnt)
+                {
+                    data = _data;
+                }
+                else
+                    for (int i = 0; i < _data.Count; i += downSampleCnt)
+                    {
+                        var ls = _data.Skip(i).Take(downSampleCnt);
+                        double minVal = ls.Min(h => h.xacceleration_peak_to_peak);
+                        var min = ls.FirstOrDefault(h => h.xacceleration_peak_to_peak == minVal);
+                        if (min != null)
+                            data.Add(min);
+                        double maxVal = ls.Max(h => h.xacceleration_peak_to_peak);
+                        var max = ls.FirstOrDefault(h => h.xacceleration_peak_to_peak == maxVal);
+                        if (max != null)
+                            data.Add(max);
+                    }
+
+                data = data.OrderBy(i => i.datetime).ToList();
+                List<DateTime>? timeList = data .Select(i => i.datetime).ToList();
 
                 ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel()
                 {
@@ -163,13 +217,12 @@ namespace IDMSWebServer.Controllers
                     data = data.Select(d => d.zdisplacement).ToList(),
                     borderColor = "rgba(255, 0, 0,.3)",
                 });
-                if (data.Count() > 1500)
-                {
-                    string queryID = chartData.AddToCache();
-                    clsPreviewData preview = new clsPreviewData(timeList, chartData.datasets[1].data);
-                    ViewModels.ChartingViewModel previewChartData = PreviewVMBuilder(queryID, "xacceleration_peak_to_peak", chartData.labels, data.Select(d => (object)d).ToList(), "xacceleration_peak_to_peak", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-                    return Ok(previewChartData);
-                }
+                //if (data.Count() > 1500)
+                //{
+                //    string queryID = chartData.AddToCache();
+                //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "xacceleration_peak_to_peak", chartData.labels, data.Select(d => (object)d).ToList(), "xacceleration_peak_to_peak", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
+                //    return Ok(previewChartData);
+                //}
 
                 return Ok(chartData);
             }
@@ -181,11 +234,31 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("SideBandSeverity")]
-        public async Task<IActionResult> GetSideBandSeverity(string edgename, string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetSideBandSeverity(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
         {
+            int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-            List<Side_Band> data = context.side_band.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
-            List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
+            List<Side_Band> _data = context.side_band.OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
+            List<Side_Band> data = new List<Side_Band>();
+            if (_data.Count < downSampleCnt)
+            {
+                data = _data;
+            }
+            else
+                for (int i = 0; i < _data.Count; i += downSampleCnt)
+                {
+                    var ls = _data.Skip(i).Take(downSampleCnt);
+                    double minVal = ls.Min(h => h.severity.List_SideBandInfo[0].Severity);
+                    var min = ls.FirstOrDefault(h => h.severity.List_SideBandInfo[0].Severity == minVal);
+                    if (min != null)
+                        data.Add(min);
+                    double maxVal = ls.Max(h => h.severity.List_SideBandInfo[0].Severity);
+                    var max = ls.FirstOrDefault(h => h.severity.List_SideBandInfo[0].Severity == maxVal);
+                    if (max != null)
+                        data.Add(max);
+                }
+            data = data.OrderBy(i => i.datetime).ToList();
+            List<DateTime>? timeList = data .Select(i => i.datetime).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel();
             chartData.labels = timeList;
@@ -208,22 +281,44 @@ namespace IDMSWebServer.Controllers
                 borderColor = "red",
             });
 
-            if (data.Count() > 1500)
-            {
-                string queryID = chartData.AddToCache();
-                clsPreviewData preview = new clsPreviewData(timeList, chartData.datasets[1].data);
-                ViewModels.ChartingViewModel previewChartData = PreviewVMBuilder(queryID, "SideBand.Severity", chartData.labels, chartData.datasets[0].data, "severity", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-                return Ok(previewChartData);
-            }
+            //if (data.Count() > 1500)
+            //{
+            //    string queryID = chartData.AddToCache();
+            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "SideBand.Severity", chartData.labels, chartData.datasets[0].data, "severity", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
+            //    return Ok(previewChartData);
+            //}
 
             return Ok(chartData);
         }
 
         [HttpGet("Frequency_doublingSeverity")]
-        public async Task<IActionResult> GetFrequency_doubling(string edgename, string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetFrequency_doubling(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
         {
+            int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
+            List<Frequency_doubling> _data = new List<Frequency_doubling>();
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-            List<Frequency_doubling> data = context.frequency_doubling.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
+            _data = context.frequency_doubling.OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
+
+            List<Frequency_doubling> data = new List<Frequency_doubling>();
+            if (_data.Count < downSampleCnt)
+            {
+                data = _data;
+            }
+            else
+                for (int i = 0; i < _data.Count; i += downSampleCnt)
+                {
+                    var ls = _data.Skip(i).Take(downSampleCnt);
+                    double minVal = ls.Min(h => h.severity.List_MultiFreqLog[0].Severity);
+                    var min = ls.FirstOrDefault(h => h.severity.List_MultiFreqLog[0].Severity == minVal);
+                    if (min != null)
+                        data.Add(min);
+                    double maxVal = ls.Max(h => h.severity.List_MultiFreqLog[0].Severity);
+                    var max = ls.FirstOrDefault(h => h.severity.List_MultiFreqLog[0].Severity == maxVal);
+                    if (max != null)
+                        data.Add(max);
+                }
+
+            data = data.OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel();
@@ -247,22 +342,46 @@ namespace IDMSWebServer.Controllers
                 borderColor = "red",
             });
 
-            if (data.Count() > 1500)
-            {
-                string queryID = chartData.AddToCache();
-                clsPreviewData preview = new clsPreviewData(timeList, chartData.datasets[1].data);
-                ViewModels.ChartingViewModel previewChartData = PreviewVMBuilder(queryID, "Frequency_Doubling.Severity", chartData.labels, chartData.datasets[0].data, "severity", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-                return Ok(previewChartData);
-            }
+            //if (data.Count() > 1500)
+            //{
+            //    string queryID = chartData.AddToCache();
+            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "Frequency_Doubling.Severity", chartData.labels, chartData.datasets[0].data, "severity", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
+            //    return Ok(previewChartData);
+            //}
 
             return Ok(chartData);
         }
         [HttpGet("HealthScore")]
-        public async Task<IActionResult> GetHealthScore(string edgename, string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetHealthScore(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
         {
+            int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel /2);
+
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-            List<Health_Score> data = context.health_score.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
-            List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
+            List<Health_Score> _data = context.health_score.OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
+            List<Health_Score> data = new List<Health_Score>();
+
+            if (_data.Count < downSampleCnt)
+            {
+                data = _data;
+            }
+            else
+            {
+                for (int i = 0; i < _data.Count; i += downSampleCnt)
+                {
+                    var ls = _data.Skip(i).Take(downSampleCnt);
+                    double minVal = ls.Min(h => h.score);
+                    var min = ls.FirstOrDefault(h => h.score == minVal);
+                    if (min != null)
+                        data.Add(min);
+                    double maxVal = ls.Max(h => h.score);
+                    var max = ls.FirstOrDefault(h => h.score == maxVal);
+                    if (max != null)
+                        data.Add(max);
+                }
+            }
+
+            data = data.OrderBy(i => i.datetime).ToList();
+            List<DateTime>? timeList = data .Select(i => i.datetime).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel()
             {
@@ -285,14 +404,12 @@ namespace IDMSWebServer.Controllers
                 backgroundColor = "blue",
             });
 
-            if (data.Count() > 1500)
-            {
-                string queryID = chartData.AddToCache();
-
-                clsPreviewData preview = new clsPreviewData(timeList, chartData.datasets[1].data);
-                ViewModels.ChartingViewModel previewChartData = PreviewVMBuilder(queryID, "Score", chartData.labels, data.Select(d => (object)d).ToList(), "score", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-                return Ok(previewChartData);
-            }
+            //if (data.Count() > 1500)
+            //{
+            //    string queryID = chartData.AddToCache();
+            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "Score", chartData.labels, data.Select(d => (object)d).ToList(), "score", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
+            //    return Ok(previewChartData);
+            //}
 
             return Ok(chartData);
         }
@@ -301,7 +418,17 @@ namespace IDMSWebServer.Controllers
         public async Task<IActionResult> GetAlertIndex(string edgename, string ip, DateTime from, DateTime to)
         {
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-            List<Alert_Index>? data = context.alert_index.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
+            List<Alert_Index>? _data = context.alert_index.Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
+
+            List<Alert_Index> data = _data;
+            //for (int i = 0; i < _data.Count; i += 1)
+            //{
+            //    Alert_Index ai = _data.Skip(i).Take(1).FirstOrDefault();
+            //    if (ai != null)
+            //        data.Add(ai);
+            //}
+
+
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel()
@@ -319,13 +446,12 @@ namespace IDMSWebServer.Controllers
                 fill = "false"
             });
 
-            if (data.Count() > 1500)
-            {
-                string queryID = chartData.AddToCache();
-                clsPreviewData preview = new clsPreviewData(timeList, data.Select(i => i.alert_index).ToList());
-                ViewModels.ChartingViewModel previewChartData = PreviewVMBuilder(queryID, "Alert Index", chartData.labels, data.Select(d => (object)d).ToList(), "alert_index", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-                return Ok(previewChartData);
-            }
+            //if (data.Count() > 1500)
+            //{
+            //    string queryID = chartData.AddToCache();
+            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "Alert Index", chartData.labels, data.Select(d => (object)d).ToList(), "alert_index", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
+            //    return Ok(previewChartData);
+            //}
             return Ok(chartData);
         }
 
@@ -430,7 +556,7 @@ namespace IDMSWebServer.Controllers
                 }
             }
             watch.Stop();
-            _logger.LogWarning("Raw Data Query OUt Time Spend:{0}",watch.Elapsed);
+            _logger.LogWarning("Raw Data Query OUt Time Spend:{0}", watch.Elapsed);
 
             return Ok(vibrationChartData);
         }
@@ -483,19 +609,19 @@ namespace IDMSWebServer.Controllers
             return Ok(spliceDataRet);
         }
 
-        private ViewModels.ChartingViewModel PreviewVMBuilder(string queryID, string label, List<DateTime> dataTimesSource,
+        private ViewModels.ChartingViewModel DownSamplingVMBuilder(string queryID, string label, List<DateTime> dataTimesSource,
             List<object> dataSource, string propertyName, string color = "orange", string fillMethod = "false", double ymax = -1, double ymin = -1)
         {
             clsPreviewData preview = new clsPreviewData(dataTimesSource, dataSource.Select(i => i.GetType().GetProperty(propertyName).GetValue(i)).Select(d => (double)d).ToList());
-            ViewModels.ChartingViewModel previewChartData = new ViewModels.ChartingViewModel()
+            ViewModels.ChartingViewModel downSamplingChartData = new ViewModels.ChartingViewModel()
             {
                 ymin = ymin,
                 ymax = ymax,
             };
-            previewChartData.isPreview = true;
-            previewChartData.QueryID = queryID;
-            previewChartData.labels = preview.TimeLs;
-            previewChartData.datasets.Add(new ViewModels.DataSet
+
+            downSamplingChartData.QueryID = queryID;
+            downSamplingChartData.labels = preview.TimeLs;
+            downSamplingChartData.datasets.Add(new ViewModels.DataSet
             {
                 label = label,
                 data = preview.DataLs,
@@ -504,9 +630,9 @@ namespace IDMSWebServer.Controllers
 
             });
 
-            return previewChartData;
+            return downSamplingChartData;
         }
-        private ViewModels.ChartingViewModel PreviewVMBuilder(string queryID, string label, List<DateTime> dataTimesSource,
+        private ViewModels.ChartingViewModel DownSamplingVMBuilder(string queryID, string label, List<DateTime> dataTimesSource,
            List<double> dataSource, string propertyName, string color = "orange", string fillMethod = "false", double ymax = -1, double ymin = -1)
         {
             clsPreviewData preview = new clsPreviewData(dataTimesSource, dataSource);
@@ -515,7 +641,7 @@ namespace IDMSWebServer.Controllers
                 ymin = ymin,
                 ymax = ymax,
             };
-            previewChartData.isPreview = true;
+
             previewChartData.QueryID = queryID;
             previewChartData.labels = preview.TimeLs;
             previewChartData.datasets.Add(new ViewModels.DataSet

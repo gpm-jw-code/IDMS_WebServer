@@ -6,5 +6,7 @@
         public string EdgeIP { get; set; }
         public int SensorNum { get; set; }
         public string Status { get; set; }
+
+        public string DbDickUsage { get; set; } = "-";
     }
 }

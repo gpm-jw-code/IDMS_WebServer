@@ -103,6 +103,24 @@ namespace IDMSWebServer.Database
         }
 
 
+        public async Task<Dictionary<string, string>> GetDatabaseUsageState()
+        {
+            DataTable table = new DataTable();
+            bool opened = TryConnect(Host, Port, UserName, Password, "postgres", out NpgsqlConnection conn);
+            if (opened)
+            {
+                using (var command_execute = new NpgsqlCommand("SELECT datname, pg_size_pretty(pg_database_size(datname)) as size FROM pg_database", conn))
+                {
+                    NpgsqlDataAdapter DataAdapte = new NpgsqlDataAdapter(command_execute);
+                    DataAdapte.Fill(table);
+                    await conn.CloseAsync();
+                }
+            }
+            Dictionary<string, string> useageDict = table.Rows.Cast<System.Data.DataRow>().ToDictionary(row => row["datname"].ToString(), row => row["size"].ToString());
+            return useageDict;
+        }
+
+
         virtual protected string SqlCommandStringBuilder()
         {
             return $"";
@@ -114,6 +132,40 @@ namespace IDMSWebServer.Database
             _datatable = new DataTable();
 
             bool opened = TryConnect(Host, Port, UserName, Password, Database, out NpgsqlConnection conn);
+            if (opened)
+            {
+                try
+                {
+                    using (var Command_Execute = new NpgsqlCommand(sqlQueryString, conn))
+                    {
+                        NpgsqlDataAdapter DataAdapte = new NpgsqlDataAdapter(Command_Execute);
+                        DataAdapte.Fill(_datatable);
+                    }
+                    dataNum = _datatable.Rows.Count;
+                    conn.CloseAsync();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    message = $"嘗試向資料庫讀取資料時發生錯誤:${ex.Message}";
+                    return false;
+                }
+            }
+            else
+            {
+                message = "資料庫無法開啟";
+                return false;
+            }
+
+        }
+
+        protected bool TryGetTableFromDB(string sqlQueryString,string dbname, out int dataNum, out DataTable _datatable, out string message)
+        {
+            message = "";
+            dataNum = 0;
+            _datatable = new DataTable();
+
+            bool opened = TryConnect(Host, Port, UserName, Password, dbname, out NpgsqlConnection conn);
             if (opened)
             {
                 try
