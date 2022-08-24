@@ -60,6 +60,10 @@ namespace IDMSWebServer.Models.IDMS
                     }
                     else
                     {
+                        if(edge.VE.WithCharting == null)
+                        {
+                            return null;
+                        }
                         var objs = JsonSerializer.Deserialize<Dictionary<string, Object>>(edge.VE.WithCharting);
                         if (objs.TryGetValue(sensorIP, out object json))
                         {

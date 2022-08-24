@@ -53,6 +53,10 @@ namespace IDMSWebServer.Controllers
         [HttpPost("VEData/{edgeIP}")]
         public async Task VEData(string edgeIP, [FromBody] string jsonstr)
         {
+            if (edgeIP == "192.168.0.138")
+            {
+
+            }
             Models.IDMS.DataMiddleware.Update.UpdateVEDataWithCharting(edgeIP, jsonstr);
         }
         [HttpPost("VEDataWithoutCharting/{edgeIP}")]
