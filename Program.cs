@@ -1,14 +1,24 @@
-﻿using IDMSWebServer.Models.DataModels;
+﻿using System.Data.Entity.Core.Mapping;
+using System.Data.Entity.Core.Metadata.Edm;
+using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Infrastructure.MappingViews;
+using IDMSWebServer.Models.DataModels;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileProviders;
 
-var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
+//EF CORE 模型預熱
+//Console.WriteLine("模型預熱");
+//using (var context = new IDMSContext())
+//{
+//    var objectContent = ((IObjectContextAdapter)context).ObjectContext;
+//    var mappingCollection = (StorageMappingItemCollection)objectContent.MetadataWorkspace.GetItemCollection(System.Data.Entity.Core.Metadata.Edm.DataSpace.CSpace);
+//    mappingCollection.GenerateViews(new List<EdmSchemaError>());
+//}
+
+    var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -20,7 +30,6 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNameCaseInsensitive = false;
     options.SerializerOptions.WriteIndented = true;
 });
-builder.Services.AddApplicationInsightsTelemetry();
 
 builder.Services.Configure<BrotliCompressionProviderOptions>(option => option.Level = System.IO.Compression.CompressionLevel.Optimal);
 builder.Services.AddResponseCompression(options => {

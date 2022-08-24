@@ -17,7 +17,10 @@ namespace IDMSWebServer.Models.DataModels
         public DbSet<Side_Band> side_band { get; set; }
         public DbSet<Frequency_doubling> frequency_doubling { get; set; }
         public DbSet<pc_information> pc_information { get; set; }
+        public IDMSContext():base()
+        {
 
+        }
         public IDMSContext(IConfiguration config, string dbName, string schema)
         {
             _config = config;
