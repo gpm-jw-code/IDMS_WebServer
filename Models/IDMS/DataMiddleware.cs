@@ -4,7 +4,7 @@ namespace IDMSWebServer.Models.IDMS
 {
     public class DataMiddleware
     {
-        public static Dictionary<string, IDMSEdgeData> EdgeDatas = new Dictionary<string, IDMSEdgeData>();
+        public static Dictionary<string, IDMSEdgeData> EdgeDatas { get; set; } = new Dictionary<string, IDMSEdgeData>();
 
 
         private static void InitializeEdge(string edgeIP)
@@ -60,7 +60,7 @@ namespace IDMSWebServer.Models.IDMS
                     }
                     else
                     {
-                        if(edge.VE.WithCharting == null)
+                        if (edge.VE.WithCharting == null)
                         {
                             return null;
                         }

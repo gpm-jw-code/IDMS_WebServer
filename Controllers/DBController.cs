@@ -4,6 +4,7 @@ using IDMSWebServer.Models.DataModels;
 using IDMSWebServer.Models;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using IDMSWebServer.Models.Charting;
 
 namespace IDMSWebServer.Controllers
 {
@@ -64,8 +65,9 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("VibrationEnergy")]
-        public async Task<IActionResult> GetVibrationEnergy(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
+        public async Task<IActionResult> GetVibrationEnergy(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel, string? customSettingJson)
         {
+            await Task.Delay(1);
             int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             var _data = context.vibration_energy.AsNoTracking().OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
@@ -74,10 +76,10 @@ namespace IDMSWebServer.Controllers
             int cnt = _data.Count();
             if (cnt < downSampleCnt)
             {
-                data = _data.Select(v=>v).ToList();
+                data = _data.Select(v => v).ToList();
             }
             else
-                for (int i = 0; i <cnt; i += downSampleCnt)
+                for (int i = 0; i < cnt; i += downSampleCnt)
                 {
                     var ls = _data.Skip(i).Take(downSampleCnt);
                     double minVal = ls.Min(h => h.x);
@@ -89,44 +91,26 @@ namespace IDMSWebServer.Controllers
                     if (max != null)
                         data.Add(max);
                 }
-            data = data.OrderBy(i=>i.datetime).ToList();
+            data = data.OrderBy(i => i.datetime).ToList();
             List<DateTime>? timeList = data.OrderBy(i => i.datetime).Select(i => i.datetime).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel();
             chartData.labels = timeList;
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "X",
-                data = data.Select(d => d.x).ToList(),
-                borderColor = "rgb(13, 110, 253)",
-                backgroundColor = "rgb(13, 110, 253)",
-            });
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Y",
-                data = data.Select(d => d.y).ToList(),
-                borderColor = "rgb(48, 239, 149)",
-                backgroundColor = "rgb(48, 239, 149)"
-            });
+            chartData.datasets = DatasetFactory.CreateVibrationEnergyDatasets(data.Select(d => d.x).ToList(), data.Select(d => d.y).ToList(), data.Select(d => d.z).ToList());
+            chartData.CustomStyleSettingApply(customSettingJson);
 
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Z",
-                data = data.Select(d => d.z).ToList(),
-                borderColor = "rgb(245, 62, 62)",
-                backgroundColor = "rgb(245, 62, 62)",
-            });
             context.Dispose();
             return Ok(chartData);
         }
 
 
         [HttpGet("Physical_quantity")]
-        public async Task<IActionResult> GetPhysicalQuantity(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
+        public async Task<IActionResult> GetPhysicalQuantity(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel, string? customSettingJson)
         {
+            await Task.Delay(1);
             try
             {
-                int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel );
+                int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel);
                 using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
                 var _data = context.physical_quantity.AsNoTracking().OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
                 List<Physical_quantity> data = new List<Physical_quantity>();
@@ -150,7 +134,7 @@ namespace IDMSWebServer.Controllers
                     }
 
                 data = data.OrderBy(i => i.datetime).ToList();
-                List<DateTime>? timeList = data .Select(i => i.datetime).ToList();
+                List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
 
                 ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel()
                 {
@@ -158,70 +142,14 @@ namespace IDMSWebServer.Controllers
                     ymin = -1
                 };
                 chartData.labels = timeList;
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "加速度-P2P.X",
-                    data = data.Select(d => d.xacceleration_peak_to_peak).ToList(),
-                    borderColor = "rgb(0, 0, 255)",
-                });
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "加速度-P2P.Y",
-                    data = data.Select(d => d.yacceleration_peak_to_peak).ToList(),
-                    borderColor = "rgb(0, 128, 0)",
-                });
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "加速度-P2P.Z",
-                    data = data.Select(d => d.xacceleration_peak_to_peak).ToList(),
-                    borderColor = "rgb(255, 0, 0)",
-                });
+                chartData.datasets = DatasetFactory.CreatePhysicalQuantityDatasets(
+                    data.Select(d => d.xacceleration_peak_to_peak).ToList(), data.Select(d => d.yacceleration_peak_to_peak).ToList(), data.Select(d => d.zacceleration_peak_to_peak).ToList(),
+                    data.Select(d => d.xvelocity).ToList(), data.Select(d => d.yvelocity).ToList(), data.Select(d => d.zvelocity).ToList(),
+                    data.Select(d => d.xdisplacement).ToList(), data.Select(d => d.ydisplacement).ToList(), data.Select(d => d.zdisplacement).ToList()
+                );
+                chartData.CustomStyleSettingApply(customSettingJson);
 
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "速度.X",
-                    data = data.Select(d => d.xvelocity).ToList(),
-                    borderColor = "rgba(0, 0, 255,.7)",
-                });
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "速度.Y",
-                    data = data.Select(d => d.yvelocity).ToList(),
-                    borderColor = "rgba(0, 128,0,.7)",
-                });
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "速度.Z",
-                    data = data.Select(d => d.zvelocity).ToList(),
-                    borderColor = "rgba(255, 0, 0,.7)",
-                });
-
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "速度.X",
-                    data = data.Select(d => d.xdisplacement).ToList(),
-                    borderColor = "rgba(0, 0, 255,.3)",
-                });
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "速度.Y",
-                    data = data.Select(d => d.ydisplacement).ToList(),
-                    borderColor = "rgb(0, 128,0,.3)",
-                });
-                chartData.datasets.Add(new ViewModels.DataSet
-                {
-                    label = "位移.Z",
-                    data = data.Select(d => d.zdisplacement).ToList(),
-                    borderColor = "rgba(255, 0, 0,.3)",
-                });
-                //if (data.Count() > 1500)
-                //{
-                //    string queryID = chartData.AddToCache();
-                //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "xacceleration_peak_to_peak", chartData.labels, data.Select(d => (object)d).ToList(), "xacceleration_peak_to_peak", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-                //    return Ok(previewChartData);
-                //}
                 context.Dispose();
-
                 return Ok(chartData);
             }
             catch (Exception ex)
@@ -232,11 +160,12 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("SideBandSeverity")]
-        public async Task<IActionResult> GetSideBandSeverity(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
+        public async Task<IActionResult> GetSideBandSeverity(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel, string? customSettingJson)
         {
+            await Task.Delay(1);
             int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
-            var _data = context.side_band.AsNoTracking().OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
+            var _data = context.side_band.AsNoTracking().OrderBy(i => i.datetime).Select(r => r).Where(i => i.datetime >= from && i.datetime <= to).ToList();
             List<Side_Band> data = new List<Side_Band>();
             var cnt = _data.Count();
             if (cnt < downSampleCnt)
@@ -257,43 +186,24 @@ namespace IDMSWebServer.Controllers
                         data.Add(max);
                 }
             data = data.OrderBy(i => i.datetime).ToList();
-            List<DateTime>? timeList = data .Select(i => i.datetime).ToList();
+            List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
+
+            var xData = data.Select(d => d.severity.List_SideBandInfo[0].Severity).ToList();
+            var yData = data.Select(d => d.severity.List_SideBandInfo[1].Severity).ToList();
+            var zData = data.Select(d => d.severity.List_SideBandInfo[2].Severity).ToList();
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel();
             chartData.labels = timeList;
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "SideBand.Severity.X",
-                data = data.Select(d => d.severity.List_SideBandInfo[0].Severity).ToList(),
-                borderColor = "rgb(13, 110, 253)",
-            });
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "SideBand.Severity.Y",
-                data = data.Select(d => d.severity.List_SideBandInfo[1].Severity).ToList(),
-                borderColor = "rgb(48, 239, 149)",
-            });
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "SideBand.Severity.Z",
-                data = data.Select(d => d.severity.List_SideBandInfo[2].Severity).ToList(),
-                borderColor = "rgb(245, 62, 62)",
-            });
-
-            //if (data.Count() > 1500)
-            //{
-            //    string queryID = chartData.AddToCache();
-            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "SideBand.Severity", chartData.labels, chartData.datasets[0].data, "severity", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-            //    return Ok(previewChartData);
-            //}
+            chartData.datasets = DatasetFactory.CreateSideBandSeverityDatasets(xData, yData, zData);
+            chartData.CustomStyleSettingApply(customSettingJson);
             context.Dispose();
-
             return Ok(chartData);
         }
 
         [HttpGet("Frequency_doublingSeverity")]
-        public async Task<IActionResult> GetFrequency_doubling(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel)
+        public async Task<IActionResult> GetFrequency_doubling(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel, string? customSettingJson)
         {
+            await Task.Delay(1);
             int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             var _data = context.frequency_doubling.AsNoTracking().OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
@@ -323,39 +233,21 @@ namespace IDMSWebServer.Controllers
 
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel();
             chartData.labels = timeList;
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Frequency_Doubling.Severity.X",
-                data = data.Select(d => d.severity.List_MultiFreqLog[0].Severity).ToList(),
-                borderColor = "rgb(13, 110, 253)",
-            });
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Frequency_Doubling.Severity.Y",
-                data = data.Select(d => d.severity.List_MultiFreqLog[1].Severity).ToList(),
-                borderColor = "rgb(48, 239, 149)",
-            });
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Frequency_Doubling.Severity.Z",
-                data = data.Select(d => d.severity.List_MultiFreqLog[2].Severity).ToList(),
-                borderColor = "rgb(245, 62, 62)",
-            });
+            var xData = data.Select(d => d.severity.List_MultiFreqLog[0].Severity).ToList();
+            var yData = data.Select(d => d.severity.List_MultiFreqLog[1].Severity).ToList();
+            var zData = data.Select(d => d.severity.List_MultiFreqLog[2].Severity).ToList();
+            chartData.datasets = DatasetFactory.CreateFrequencyDoublingSeverityDatasets(xData, yData, zData);
+            chartData.CustomStyleSettingApply(customSettingJson);
 
-            //if (data.Count() > 1500)
-            //{
-            //    string queryID = chartData.AddToCache();
-            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "Frequency_Doubling.Severity", chartData.labels, chartData.datasets[0].data, "severity", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-            //    return Ok(previewChartData);
-            //}
             context.Dispose();
 
             return Ok(chartData);
         }
         [HttpGet("HealthScore")]
-        public async Task<IActionResult> GetHealthScore(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel ,string? customSettingJson)
+        public async Task<IActionResult> GetHealthScore(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel, string? customSettingJson)
         {
-            int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel /2);
+            await Task.Delay(1);
+            int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
 
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             var _data = context.health_score.AsNoTracking().OrderBy(i => i.datetime).Where(i => i.datetime >= from && i.datetime <= to).ToList();
@@ -382,80 +274,38 @@ namespace IDMSWebServer.Controllers
             }
 
             data = data.OrderBy(i => i.datetime).ToList();
-            List<DateTime>? timeList = data .Select(i => i.datetime).ToList();
-
+            List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel()
             {
                 ymax = 100,
                 ymin = 0
             };
             chartData.labels = timeList;
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Score_WMA",
-                data = data.Select(d => d.score_wma).ToList(),
-                borderColor = "rgb(255,255,255)",
-                backgroundColor = "rgb(255,255,255)"
-            });
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Score",
-                data = data.Select(d => d.score).ToList(),
-                borderColor = "rgb(30, 94, 197)",
-                backgroundColor = "rgb(30, 94, 197)",
-                borderWidth = 2
-            });
+            chartData.datasets = DatasetFactory.CreateHealthScoreDatasets(data.Select(d => d.score).ToList(), data.Select(d => d.score_wma).ToList());
 
-            //if (data.Count() > 1500)
-            //{
-            //    string queryID = chartData.AddToCache();
-            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "Score", chartData.labels, data.Select(d => (object)d).ToList(), "score", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-            //    return Ok(previewChartData);
-            //}
             context.Dispose();
             chartData.CustomStyleSettingApply(customSettingJson);
             return Ok(chartData);
         }
 
         [HttpGet("AlertIndex")]
-        public async Task<IActionResult> GetAlertIndex(string edgename, string ip, DateTime from, DateTime to)
+        public async Task<IActionResult> GetAlertIndex(string edgename, string ip, DateTime from, DateTime to, string? customSettingJson)
         {
+            await Task.Delay(1);
             using var context = new IDMSContext(_config, edgename, SensorSchema(ip));
             List<Alert_Index>? _data = context.alert_index.AsNoTracking().Where(i => i.datetime >= from && i.datetime <= to).Select(i => i).OrderBy(i => i.datetime).ToList();
-
             List<Alert_Index> data = _data;
-            //for (int i = 0; i < _data.Count; i += 1)
-            //{
-            //    Alert_Index ai = _data.Skip(i).Take(1).FirstOrDefault();
-            //    if (ai != null)
-            //        data.Add(ai);
-            //}
-
-
             List<DateTime>? timeList = data.Select(i => i.datetime).ToList();
-
             ViewModels.ChartingViewModel chartData = new ViewModels.ChartingViewModel()
             {
                 ymax = 0,
                 ymin = 100,
-
             };
             chartData.labels = timeList;
-            chartData.datasets.Add(new ViewModels.DataSet
-            {
-                label = "Alert Index",
-                data = data.Select(d => d.alert_index).ToList(),
-                borderColor = "orange",
-                fill = "false"
-            });
-
-            //if (data.Count() > 1500)
-            //{
-            //    string queryID = chartData.AddToCache();
-            //    ViewModels.ChartingViewModel previewChartData = DownSamplingVMBuilder(queryID, "Alert Index", chartData.labels, data.Select(d => (object)d).ToList(), "alert_index", fillMethod: "false", ymax: chartData.ymax, ymin: chartData.ymin);
-            //    return Ok(previewChartData);
-            //}
+            chartData.datasets = DatasetFactory.CreateAlertIndexDatasets(data.Select(d => d.alert_index).ToList());
+            chartData.CustomStyleSettingApply(customSettingJson);
             context.Dispose();
+            chartData.CustomStyleSettingApply(customSettingJson);
 
             return Ok(chartData);
         }
@@ -463,6 +313,7 @@ namespace IDMSWebServer.Controllers
         [HttpGet("vibration_raw_data_with_QueryID")]
         public async Task<IActionResult> GetVibration_raw_data_with_queryID(string edgename, string ip, DateTime from, DateTime to, string queryID)
         {
+            await Task.Delay(1);
             Stopwatch watch = Stopwatch.StartNew();
 
             _logger.LogInformation("User query Edge:{0} Module:{1} From:{2} To:{3} - QueryID:{4} ", edgename, ip, from, to, queryID);
@@ -518,21 +369,18 @@ namespace IDMSWebServer.Controllers
                 {
                     label = "X",
                     borderColor = "rgb(30, 94, 197)",
-                    backgroundColor = "rgb(13, 110, 253)",
                     data = datals.Select(i => i.x.Average()).ToList()
                 });
                 vibrationChartData.datasets.Add(new ViewModels.DataSet
                 {
                     label = "y",
                     borderColor = "rgb(48, 239, 149)",
-                    backgroundColor = "rgb(48, 239, 149)",
                     data = datals.Select(i => i.y.Average()).ToList()
                 });
                 vibrationChartData.datasets.Add(new ViewModels.DataSet
                 {
                     label = "z",
                     borderColor = "rgb(245, 62, 62)",
-                    backgroundColor = "rgb(245, 62, 62)",
                     data = datals.Select(i => i.z.Average()).ToList()
                 });
             }
@@ -542,9 +390,9 @@ namespace IDMSWebServer.Controllers
                 vibrationChartData.labels = new List<DateTime>();
                 vibrationChartData.ymax = 2;
                 vibrationChartData.ymin = -2;
-                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "rgb(13, 110, 253)", backgroundColor = "rgb(13, 110, 253)" });
-                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "rgb(48, 239, 149)", backgroundColor = "rgb(48, 239, 149)" });
-                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "rgb(245, 62, 62)", backgroundColor = "rgb(245, 62, 62)" });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "X", borderColor = "rgb(13, 110, 253)" });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Y", borderColor = "rgb(48, 239, 149)" });
+                vibrationChartData.datasets.Add(new ViewModels.DataSet() { label = "Z", borderColor = "rgb(245, 62, 62)" });
 
 
                 foreach (var item in datals)
@@ -661,7 +509,6 @@ namespace IDMSWebServer.Controllers
 
             return previewChartData;
         }
-
         private string SensorSchema(string ip)
         {
             return $"sensor_{ip.Replace(".", "_")}";

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using IDMSWebServer.Models.Charting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -144,6 +145,11 @@ namespace IDMSWebServer.Controllers
             }
         }
 
+        [HttpGet("Charting/QueryChartDefaultStyles")]
+        public async Task<IActionResult> GetQueryChartDefaultStyles()
+        {
+            return Ok(new DefaultStylesModel());
+        }
 
         private void IsWebsocketRequest(out bool isWebsocket, out System.Net.WebSockets.WebSocket client)
         {

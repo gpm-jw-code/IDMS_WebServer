@@ -20,6 +20,8 @@ namespace IDMSWebServer.ViewModels
 
         internal void CustomStyleSettingApply(string? customSettingJson)
         {
+            if (customSettingJson == null)
+                return;
             Dictionary<string, ChartStyle>? settingObj = new Dictionary<string, ChartStyle>();
             try
             {
@@ -29,16 +31,7 @@ namespace IDMSWebServer.ViewModels
             {
             }
 
-            var customStyle = datasets.Select(ds => ds).ToDictionary(ds => ds.label, ds => new ChartStyle()
-            {
-                backgroundColor = ds.backgroundColor,
-                borderColor = ds.borderColor,
-                borderWidth = ds.borderWidth,
-                fill = ds.fill,
-                lineTension = ds.lineTension,
-                pointRadius = ds.pointRadius,
-                pointStyle = ds.pointStyle
-            });
+            var customStyle = datasets.Select(ds => ds).ToDictionary(ds => ds.label, ds => ds.styles);
             foreach (var styleSet in settingObj)
                 customStyle[styleSet.Key] = styleSet.Value;
 
@@ -47,13 +40,7 @@ namespace IDMSWebServer.ViewModels
             foreach (var dataset in datasets)
             {
                 var settings = customStyle[dataset.label];
-                dataset.backgroundColor = settings.backgroundColor;
-                dataset.borderColor = settings.borderColor;
-                dataset.borderWidth = settings.borderWidth;
-                dataset.fill = settings.fill;
-                dataset.lineTension = settings.lineTension;
-                dataset.pointRadius = settings.pointRadius;
-                dataset.pointStyle = settings.pointStyle;
+                dataset.styles = settings;
             }
             //throw new NotImplementedException();
         }
@@ -61,14 +48,49 @@ namespace IDMSWebServer.ViewModels
 
     public class DataSet : ChartStyle
     {
-        public string label { get; set; } = "";
         public List<double> data { get; set; } = new List<double>();
+
+        public ChartStyle styles
+        {
+            set
+            {
+                label = value.label;
+                borderColor = value.borderColor;
+                fill = value.borderColor;
+                lineTension = value.lineTension;
+                pointRadius = value.pointRadius;
+                pointStyle = value.pointStyle;
+                borderWidth = value.borderWidth;
+            }
+            get
+            {
+                return new ChartStyle()
+                {
+                    label = label,
+                    borderColor = borderColor,
+                    fill = borderColor,
+                    lineTension = lineTension,
+                    pointRadius = pointRadius,
+                    pointStyle = pointStyle,
+                    borderWidth = borderWidth,
+                };
+            }
+        }
     }
 
     public class ChartStyle
     {
-        public string borderColor { get; set; } = "blue";
-        public string backgroundColor { get; set; } = "blue";
+        private string _borderColor = "blue";
+        public string borderColor
+        {
+            get => _borderColor;
+            set
+            {
+                _borderColor = backgroundColor = value;
+            }
+        }
+        public string label { get; set; } = "";
+        public string backgroundColor { get; private set; } = "blue";
         public int borderWidth { get; set; } = 1;
         public string fill { get; set; } = "false";
         public string pointStyle { get; set; } = "none";

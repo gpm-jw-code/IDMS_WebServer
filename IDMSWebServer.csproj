@@ -47,8 +47,5 @@
     <None Include="C:\Users\User\Desktop\IDMS_WebServer\.editorconfig" />
     <None Include="wwwroot\release note.md" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\Charting\" />
-  </ItemGroup>
 
 </Project>

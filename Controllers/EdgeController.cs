@@ -64,5 +64,11 @@ namespace IDMSWebServer.Controllers
         {
             Models.IDMS.DataMiddleware.Update.UpdateVEDataWithoutCharting(edgeIP, jsonstr);
         }
+
+        [HttpGet("EdgesWSDataState")]
+        public async Task<IActionResult> GetEdgesWSDataState()
+        {
+            return Ok(Models.IDMS.DataMiddleware.EdgeDatas);
+        }
     }
 }
