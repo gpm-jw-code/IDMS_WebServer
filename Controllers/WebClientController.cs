@@ -151,6 +151,8 @@ namespace IDMSWebServer.Controllers
             return Ok(new DefaultStylesModel());
         }
 
+
+
         private void IsWebsocketRequest(out bool isWebsocket, out System.Net.WebSockets.WebSocket client)
         {
             client = null;

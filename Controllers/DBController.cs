@@ -5,6 +5,7 @@ using IDMSWebServer.Models;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using IDMSWebServer.Models.Charting;
+using Microsoft.Net.Http.Headers;
 
 namespace IDMSWebServer.Controllers
 {
@@ -21,7 +22,7 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("GetEdgeInformation")]
-        public async Task<IActionResult> GetEdgesInformation()
+        public async Task<List<ViewModels.EdgeStatus>> GetEdgesInformation()
         {
             PostgrelDBController postgrelDBController = new PostgrelDBController(_config);
             var dbs = await postgrelDBController.GetDatabases();
@@ -53,7 +54,7 @@ namespace IDMSWebServer.Controllers
                 {
                 }
             }
-            return Ok(infos);
+            return infos;
         }
 
         [HttpGet("DBDiskUsage")]
@@ -246,6 +247,8 @@ namespace IDMSWebServer.Controllers
         [HttpGet("HealthScore")]
         public async Task<IActionResult> GetHealthScore(string edgename, string ip, DateTime from, DateTime to, int? chart_pixel, string? customSettingJson)
         {
+            var header = HttpContext.Request.Headers[HeaderNames.Authorization][0];
+
             await Task.Delay(1);
             int downSampleCnt = (int)(chart_pixel == null ? 100 : chart_pixel / 2);
 

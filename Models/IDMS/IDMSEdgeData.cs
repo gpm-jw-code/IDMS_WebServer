@@ -2,7 +2,12 @@
 {
     public class IDMSEdgeData
     {
-
+        public string EdIP { get; set; }
+        public IDMSEdgeData() { }
+        public IDMSEdgeData(string EdgeIP)
+        {
+            this.EdIP = EdgeIP;
+        }
         public DateTime DignoseDataUpdateTime { get; private set; }
         public DateTime HSCharingDataUpdateTime { get; private set; }
         public DateTime AIHCharingDataUpdateTime { get; private set; }
@@ -28,6 +33,11 @@
         private string _AIDCharingData = "";
         private string _ModuleStatesData = "";
         private string _EdgeStates = "";
+
+        internal void ClearData()
+        {
+            _DignoseData = _HSCharingData = _AIHCharingData = _AIDCharingData = _ModuleStatesData = _EdgeStates = VE._WithCharting = VE._WithoutCharting = "";
+        }
     }
     public class clsVE
     {
@@ -37,7 +47,7 @@
         public string WithCharting { get => _WithCharting; set { _WithCharting = value; WithChartingUpdateTime = DateTime.Now; } }
 
 
-        private string _WithoutCharting = "";
-        private string _WithCharting = "";
+        internal string _WithoutCharting = "";
+        internal string _WithCharting = "";
     }
 }

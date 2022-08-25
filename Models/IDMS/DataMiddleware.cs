@@ -5,14 +5,25 @@ namespace IDMSWebServer.Models.IDMS
     public class DataMiddleware
     {
         public static Dictionary<string, IDMSEdgeData> EdgeDatas { get; set; } = new Dictionary<string, IDMSEdgeData>();
-
+        public static Dictionary<string, IDMSEdgeData> EdgeDatasWithoutData
+        {
+            get
+            {
+                var _EdgeDatas = JsonSerializer.Deserialize<Dictionary<string, IDMSEdgeData>>(JsonSerializer.Serialize(EdgeDatas));
+                foreach (var item in _EdgeDatas)
+                {
+                    item.Value.ClearData();
+                }
+                return _EdgeDatas;
+            }
+        }
 
         private static void InitializeEdge(string edgeIP)
         {
             lock (EdgeDatas)
             {
                 if (!EdgeDatas.ContainsKey(edgeIP))
-                    EdgeDatas.Add(edgeIP, new IDMSEdgeData());
+                    EdgeDatas.Add(edgeIP, new IDMSEdgeData(edgeIP));
             }
         }
         public struct Fetch

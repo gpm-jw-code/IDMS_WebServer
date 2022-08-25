@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using IDMSWebServer.Models.DataModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IDMSWebServer.Controllers
@@ -8,9 +9,12 @@ namespace IDMSWebServer.Controllers
     public class EdgeController : ControllerBase
     {
         public ILogger logger;
-        public EdgeController(ILogger<EdgeController> logger)
+        private IConfiguration config;
+
+        public EdgeController(ILogger<EdgeController> logger, IConfiguration config)
         {
             this.logger = logger;
+            this.config = config;
         }
 
 
@@ -66,9 +70,28 @@ namespace IDMSWebServer.Controllers
         }
 
         [HttpGet("EdgesWSDataState")]
-        public async Task<IActionResult> GetEdgesWSDataState()
+        public async Task<IActionResult> GetEdgesWSDataState(bool? withData)
         {
-            return Ok(Models.IDMS.DataMiddleware.EdgeDatas);
+            if (withData == null)
+                withData = false;
+
+            if ((bool)withData)
+            {
+                return Ok(Models.IDMS.DataMiddleware.EdgeDatas);
+            }
+            else
+            {
+                return Ok(Models.IDMS.DataMiddleware.EdgeDatasWithoutData);
+                ;
+            }
+        }
+        [HttpGet("edgename")]
+        public async Task<IActionResult> GetEdgeName(string ip)
+        {
+            DBController dbcontroller = new DBController(config, null);
+            var edges = await dbcontroller.GetEdgesInformation();
+            var edge = edges.FirstOrDefault(edge => edge.EdgeIP == ip);
+            return Ok(edge == null ? "" : edge.Name);
         }
     }
 }

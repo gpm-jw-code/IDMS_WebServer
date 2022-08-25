@@ -6,10 +6,26 @@ namespace IDMSWebServer.ViewModels
         public bool isPreview { get; set; } = false;
         public string QueryID { get; set; } = "";
         public List<DateTime> labels { get; set; } = new List<DateTime>();
-        public List<DataSet> datasets { get; set; } = new List<DataSet>();
+        public List<DataSet> datasets
+        {
+            get => _datasets;
+            set
+            {
+                _datasets = value;
+                //統計最大/小值
+                if (_datasets.All(da => da.data.Count == 0))
+                    return;
+                ymaxOfAllData = _datasets.Select(da => da.data.Max()).Max();
+                yminOfAllData = _datasets.Select(da => da.data.Min()).Min();
+            }
+        }
         public double ymax { get; set; } = -1;
         public double ymin { get; set; } = -1;
 
+        public double ymaxOfAllData { get; set; }
+        public double yminOfAllData { get; set; }
+
+        private List<DataSet> _datasets = new List<DataSet>();
 
         public string AddToCache()
         {

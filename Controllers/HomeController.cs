@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace IDMSWebServer.Controllers
 {
@@ -14,36 +15,36 @@ namespace IDMSWebServer.Controllers
             //var html = System.IO.File.ReadAllText("htmlpage.html");
             return base.Content(html, "text/html");
         }
-        [HttpGet("/EdgeMain/{edge_ip}")]
-        public async Task<ContentResult> EdgeMain(string edge_ip)
+        [HttpGet("/EdgeMain")]
+        public async Task<ContentResult> EdgeMain(string? ip, string? edgename)
         {
             return ReturnContent();
         }
 
 
-        [HttpGet("/VibrationEnergy/{edge_ip}")]
-        public async Task<ContentResult> VibrationEnergy(string edge_ip)
+        [HttpGet("/ve")]
+        public async Task<ContentResult> VibrationEnergy(string ip, string edgename)
         {
 
             return ReturnContent();
         }
 
 
-        [HttpGet("/modulestates/{edge_ip}")]
-        public async Task<ContentResult> modulestates(string edge_ip)
+        [HttpGet("/modulestates")]
+        public async Task<ContentResult> modulestates(string? ip, string? edgename)
         {
 
             return ReturnContent();
         }
 
         [HttpGet("/query")]
-        public async Task<ContentResult> Qurey()
+        public async Task<ContentResult> Qurey(string? ip, string? edgename)
         {
             return ReturnContent();
         }
 
         [HttpGet("/chating")]
-        public async Task<ContentResult> chating()
+        public async Task<ContentResult> chating(string? ip, string? edgename)
         {
             return ReturnContent();
         }
