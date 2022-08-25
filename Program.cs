@@ -18,7 +18,7 @@ using Microsoft.EntityFrameworkCore;
 //    mappingCollection.GenerateViews(new List<EdmSchemaError>());
 //}
 
-    var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -32,7 +32,8 @@ builder.Services.Configure<JsonOptions>(options =>
 });
 
 builder.Services.Configure<BrotliCompressionProviderOptions>(option => option.Level = System.IO.Compression.CompressionLevel.Optimal);
-builder.Services.AddResponseCompression(options => {
+builder.Services.AddResponseCompression(options =>
+{
     options.EnableForHttps = true;
     options.Providers.Add<BrotliCompressionProvider>();
     options.Providers.Add<GzipCompressionProvider>();
@@ -41,16 +42,17 @@ builder.Services.AddResponseCompression(options => {
         "text/html;charset=uft-8",
         "application/json;charset=utf-8"
     });
-}) ;
+});
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseWebSockets();
 app.UseCors(c => c.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
