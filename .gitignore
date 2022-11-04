@@ -2,3 +2,5 @@
 /bin
 /.vs
 /.vscode
+/Front-end-vue/node_modules
+/Front-end-vue/dist
