@@ -7,15 +7,25 @@ export async function GetWebSiteVersion() {
   return await GetRequest('/api/Version/WebsiteVersion')
 }
 
-/**取得Release Note */
-export async function GetReleaseNoteMD(){
-    var res = await axios.get('/api/version/releasenote').catch(er=>{
-        return '';
-    });
-    console.info(res);
-    return res.data;
+/**取得客戶公司名稱 */
+export async function GetLogoText() {
+  return await GetRequest('/api/Frontend/LogoText')
 }
 
+/**取得客戶公司圖片 */
+export async function GetCustomCOMPImage() {
+  return await axios.get('/api/Frontend/CustomCOMPImage')
+  //return await GetRequest('/api/Frontend/CustomCOMPImage')
+}
+
+/**取得Release Note */
+export async function GetReleaseNoteMD() {
+  var res = await axios.get('/api/version/releasenote').catch((er) => {
+    return ''
+  })
+  console.info(res)
+  return res.data
+}
 
 export async function GetEdgeInformation() {
   return await GetRequest('/api/DB/GetEdgeInformation')
@@ -29,23 +39,51 @@ export async function GetDatabaseList() {
 export async function GetModuleInfoStoredInDB(edgename) {
   return await GetRequest(`/api/Query/ModuleInfos?dbName=${edgename}`)
 }
-export async function QueryVibrationEnergy(edgename, ip, startT, endT, chart_pixel,customSetting) {
+export async function QueryVibrationEnergy(
+  edgename,
+  ip,
+  startT,
+  endT,
+  chart_pixel,
+  customSetting,
+) {
   return await GetRequest(
     `/api/DB/VibrationEnergy?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
 }
-export async function QueryHealthScore(edgename, ip, startT, endT,chart_pixel,customSetting) {
+export async function QueryHealthScore(
+  edgename,
+  ip,
+  startT,
+  endT,
+  chart_pixel,
+  customSetting,
+) {
   return await GetRequest(
     `/api/DB/HealthScore?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
 }
-export async function QueryAlertIndex(edgename, ip, startT, endT, chart_pixel,customSetting) {
+export async function QueryAlertIndex(
+  edgename,
+  ip,
+  startT,
+  endT,
+  chart_pixel,
+  customSetting,
+) {
   return await GetRequest(
     `/api/DB/AlertIndex?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
 }
 
-export async function QueryVibration_raw_data(edgename, ip, startT, endT, chart_pixel,customSetting) {
+export async function QueryVibration_raw_data(
+  edgename,
+  ip,
+  startT,
+  endT,
+  chart_pixel,
+  customSetting,
+) {
   return await GetRequest(
     `/api/DB/vibration_raw_data?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
@@ -56,19 +94,35 @@ export async function QueryVibration_raw_data_with_QueryID(
   ip,
   startT,
   endT,
-  queryID, chart_pixel,customSetting
+  queryID,
+  chart_pixel,
+  customSetting,
 ) {
   return await GetRequest(
     `/api/DB/vibration_raw_data_with_QueryID?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&queryID=${queryID}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
 }
 
-export async function QueryPhysical_quantity(edgename, ip, startT, endT, chart_pixel,customSetting) {
+export async function QueryPhysical_quantity(
+  edgename,
+  ip,
+  startT,
+  endT,
+  chart_pixel,
+  customSetting,
+) {
   return await GetRequest(
     `/api/DB/Physical_quantity?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
 }
-export async function QuerySideBandSeverity(edgename, ip, startT, endT, chart_pixel,customSetting) {
+export async function QuerySideBandSeverity(
+  edgename,
+  ip,
+  startT,
+  endT,
+  chart_pixel,
+  customSetting,
+) {
   return await GetRequest(
     `/api/DB/SideBandSeverity?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
   )
@@ -79,7 +133,9 @@ export async function QueryFrequency_doublingSeverity(
   edgename,
   ip,
   startT,
-  endT, chart_pixel,customSetting
+  endT,
+  chart_pixel,
+  customSetting,
 ) {
   return await GetRequest(
     `/api/DB/Frequency_doublingSeverity?edgename=${edgename}&ip=${ip}&from=${startT}&to=${endT}&chart_pixel=${chart_pixel}&customSettingJson=${customSetting}`,
@@ -122,21 +178,23 @@ export const EventQuery = {
 // }
 
 /**取得Edge端Websocket數據接收狀態 */
-export async function GetEdgeWSDataRevState(withData=false){
-  return await GetRequest('/api/edge/EdgesWSDataState');
+export async function GetEdgeWSDataRevState(withData = false) {
+  return await GetRequest('/api/edge/EdgesWSDataState')
 }
 
 /**取得IP對應的Edge名稱 */
-export async function GetEdgeNameByIP(ip){
-  return await GetRequest(`/api/edge/edgename?ip=${ip}`);
+export async function GetEdgeNameByIP(ip) {
+  return await GetRequest(`/api/edge/edgename?ip=${ip}`)
 }
 
 async function GetRequest(api = '') {
   return new Promise((resolve) => {
     axios
-      .get(api,{headers:{
-         Authorization:`Bearer thisis_thoken`
-      }})
+      .get(api, {
+        headers: {
+          Authorization: `Bearer thisis_thoken`,
+        },
+      })
       .then((res) => {
         resolve(res.data)
       })
@@ -146,6 +204,5 @@ async function GetRequest(api = '') {
           message: e.message,
         })
       })
-     
   })
 }

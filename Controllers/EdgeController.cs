@@ -8,6 +8,13 @@ namespace IDMSWebServer.Controllers
     [ApiController]
     public class EdgeController : ControllerBase
     {
+
+        public class EdgePostDataEntity
+        {
+            public string jsonStr { get; set; } = "";
+        }
+
+
         public ILogger logger;
         private IConfiguration config;
 
@@ -19,54 +26,55 @@ namespace IDMSWebServer.Controllers
 
 
         [HttpPost("EdgeStates/{edgeIP}")]
-        public async Task EdgeStates(string edgeIP, [FromBody] string jsonStr)
+        public async Task EdgeStates(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateEdgeStates(edgeIP, jsonStr);
+            Models.IDMS.DataMiddleware.Update.UpdateEdgeStates(edgeIP, entity.jsonStr);
         }
 
 
         [HttpPost("DignoseWsData/{edgeIP}")]
-        public async Task DignoseWSdata(string edgeIP, [FromBody] string jsonStr)
+        public async Task DignoseWSdata(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateDignoseData(edgeIP, jsonStr);
+
+            Models.IDMS.DataMiddleware.Update.UpdateDignoseData(edgeIP, entity.jsonStr);
         }
 
         [HttpPost("DignoseWs_HS_ChartingData/{edgeIP}")]
-        public async Task DignoseWs_HS_ChartingData(string edgeIP, [FromBody] string jsonStr)
+        public async Task DignoseWs_HS_ChartingData(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateDignoseHSCharingData(edgeIP, jsonStr);
+            Models.IDMS.DataMiddleware.Update.UpdateDignoseHSCharingData(edgeIP, entity.jsonStr);
         }
         [HttpPost("DignoseWs_AID_ChartingData/{edgeIP}")]
-        public async Task DignoseWs_AID_ChartingData(string edgeIP, [FromBody] string jsonStr)
+        public async Task DignoseWs_AID_ChartingData(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateDignoseAIDCharingData(edgeIP, jsonStr);
+            Models.IDMS.DataMiddleware.Update.UpdateDignoseAIDCharingData(edgeIP, entity.jsonStr);
         }
         [HttpPost("DignoseWs_AIH_ChartingData/{edgeIP}")]
-        public async Task DignoseWs_AIH_ChartingData(string edgeIP, [FromBody] string jsonStr)
+        public async Task DignoseWs_AIH_ChartingData(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateDignoseAIHSCharingData(edgeIP, jsonStr);
+            Models.IDMS.DataMiddleware.Update.UpdateDignoseAIHSCharingData(edgeIP, entity.jsonStr);
         }
 
         [HttpPost("ModuleStates/{edgeIP}")]
-        public async Task ModuleStates(string edgeIP, [FromBody] string jsonstr)
+        public async Task ModuleStates(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateModuleStatesData(edgeIP, jsonstr);
+            Models.IDMS.DataMiddleware.Update.UpdateModuleStatesData(edgeIP, entity.jsonStr);
         }
 
 
         [HttpPost("VEData/{edgeIP}")]
-        public async Task VEData(string edgeIP, [FromBody] string jsonstr)
+        public async Task VEData(string edgeIP, EdgePostDataEntity entity)
         {
             if (edgeIP == "192.168.0.138")
             {
 
             }
-            Models.IDMS.DataMiddleware.Update.UpdateVEDataWithCharting(edgeIP, jsonstr);
+            Models.IDMS.DataMiddleware.Update.UpdateVEDataWithCharting(edgeIP, entity.jsonStr);
         }
         [HttpPost("VEDataWithoutCharting/{edgeIP}")]
-        public async Task VEDataWithoutCharting(string edgeIP, [FromBody] string jsonstr)
+        public async Task VEDataWithoutCharting(string edgeIP, EdgePostDataEntity entity)
         {
-            Models.IDMS.DataMiddleware.Update.UpdateVEDataWithoutCharting(edgeIP, jsonstr);
+            Models.IDMS.DataMiddleware.Update.UpdateVEDataWithoutCharting(edgeIP, entity.jsonStr);
         }
 
         [HttpGet("EdgesWSDataState")]

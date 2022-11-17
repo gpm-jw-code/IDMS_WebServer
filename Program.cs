@@ -79,6 +79,7 @@ app.UseVueRouterHistory();
 app.UseAuthorization();
 app.MapControllers();
 app.UseResponseCompression();
+Console.WriteLine(Environment.CurrentDirectory);
 app.Run();
 
 

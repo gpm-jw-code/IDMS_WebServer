@@ -1,16 +1,16 @@
 <template>
-  <div id="breadcrumb" sticky>
+  <div v-show="breadcrumb_show" id="breadcrumb" sticky>
     <el-backtop :right="30" :bottom="150" />
     <!-- <el-backtop :right="30" :bottom="100" :visibility-height="-1" /> -->
     <nav v-if="!showNavbar" class="navbar navbar-expand-lg bg-primary">
       <a class="navbar-brand" href="/">
-        <span style="font-size:30px">GPM</span>
+        <span style="font-size:30px">{{LogoText}}</span>
       </a>
       <div class="navbar-brand">EDGES VIEW</div>
     </nav>
     <nav v-else class="navbar navbar-expand-lg bg-primary">
       <a class="navbar-brand" href="/">
-        <span style="font-size:30px">GPM</span>
+        <span style="font-size:30px">{{LogoText}}</span>
       </a>
       <el-popover :content="EdgeIP">
         <template #reference>
@@ -59,7 +59,7 @@ import NetworkStatusVue from './components/IDMS/components/NetworkStatus.vue';
 import ReleaseNote from '@/components/IDMS/components/AppReleaseView/ReleaseNoteView.vue'
 import NotificationIconVue from './components/IDMS/AlarmForm/NotificationIcon.vue';
 import ChatIconVue from './components/Chat/ChatIcon.vue';
-import { GetEdgeNameByIP } from './APIHelpers/DatabaseServerAPI';
+import { GetEdgeNameByIP, GetLogoText } from './APIHelpers/DatabaseServerAPI';
 export default {
   components: {
     NetworkStatusVue, ReleaseNote, NotificationIconVue, ChatIconVue
@@ -74,7 +74,9 @@ export default {
       isNotEntryPAGE: false,
       dynamic_underline_style: {
         width: '3rem'
-      }
+      },
+      LogoText: 'IDMS',
+      breadcrumb_show: false
     }
   },
   methods: {
@@ -95,6 +97,9 @@ export default {
     }
   },
   mounted() {
+    setTimeout(() => {
+      this.breadcrumb_show = true;
+    }, 2000);
     window.addEventListener('unload', () => localStorage.setItem('idms-previous-route-name', this.seletedRouteName))
     var previousRoutName = localStorage.getItem('idms-previous-route-name');
     if (previousRoutName != undefined && previousRoutName != null) {
@@ -120,7 +125,9 @@ export default {
           this.EdgeName = route.query.edgename;
         this.$refs.alarm_noti_icon.WsIni(this.EdgeIP);
       }
-
+      else {
+        GetLogoText().then(text => this.LogoText = text)
+      }
     })
 
   }
